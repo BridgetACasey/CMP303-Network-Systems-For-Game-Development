@@ -18,5 +18,13 @@
     <ClCompile Include="client_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="window_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="window_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

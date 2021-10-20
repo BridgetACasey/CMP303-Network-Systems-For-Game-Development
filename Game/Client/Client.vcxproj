@@ -156,6 +156,10 @@ xcopy /y /s "$(SolutionDir)Game\assets\*" "$(OutDir)"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="client_main.cpp" />
+    <ClCompile Include="window_manager.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="window_manager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
