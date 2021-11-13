@@ -147,7 +147,7 @@ xcopy /y /s "$(SolutionDir)Game\assets\*" "$(OutDir)"</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)SFML-2.5.1\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>sfml-graphics.lib;sfml-window.lib;sfml-system.lib;sfml-audio.lib;sfml-network.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>sfml-main.lib;sfml-graphics.lib;sfml-window.lib;sfml-system.lib;sfml-audio.lib;sfml-network.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d "$(SolutionDir)SFML-2.5.1\bin\*" "$(OutDir)"
@@ -155,16 +155,16 @@ xcopy /y /s "$(SolutionDir)Game\assets\*" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="application.cpp" />
+    <ClCompile Include="game\application.cpp" />
     <ClCompile Include="client_main.cpp" />
     <ClCompile Include="state\context.cpp" />
-    <ClCompile Include="window_manager.cpp" />
+    <ClCompile Include="game\window_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="application.h" />
+    <ClInclude Include="game\application.h" />
     <ClInclude Include="state\context.h" />
     <ClInclude Include="state\state.h" />
-    <ClInclude Include="window_manager.h" />
+    <ClInclude Include="game\window_manager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
