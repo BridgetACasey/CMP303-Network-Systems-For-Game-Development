@@ -5,18 +5,18 @@
 #include <SFML/Window/Keyboard.hpp>
 #include <SFML/Window/Mouse.hpp>
 
-struct Mouse
-{
-	sf::Vector2i position;
-	InputStatus leftButton, rightButton;
-};
-
 enum class InputStatus
 {
 	NONE = 0,
 	PRESSED,
 	HELD,
 	RELEASED
+};
+
+struct Mouse
+{
+	sf::Vector2i position;
+	InputStatus leftButton, rightButton;
 };
 
 class InputManager

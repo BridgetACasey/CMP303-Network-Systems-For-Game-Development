@@ -18,27 +18,57 @@
     <ClCompile Include="client_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="state\context.cpp">
+    <ClCompile Include="src\game\application.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="game\window_manager.cpp">
+    <ClCompile Include="src\game\window_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="game\application.cpp">
+    <ClCompile Include="src\object\game_object.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\object\player.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\state\context.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\state\game_state.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\state\menu_state.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\input\input_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="state\state.h">
+    <ClInclude Include="src\game\application.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="state\context.h">
+    <ClInclude Include="src\game\window_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="game\window_manager.h">
+    <ClInclude Include="src\object\game_object.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="game\application.h">
+    <ClInclude Include="src\object\player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\state\context.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\state\game_state.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\state\menu_state.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\state\state.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\input\input_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
