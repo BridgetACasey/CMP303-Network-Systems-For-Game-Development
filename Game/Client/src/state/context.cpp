@@ -5,11 +5,20 @@
 Context::Context()
 {
 	activeState = nullptr;
+
+	input = new InputManager();
+
+	MenuState* menu = new MenuState();
+	GameState* game = new GameState();
+
+	states[StateLabel::MENU] = menu;
+	states[StateLabel::GAME] = game;
 }
 
 Context::~Context()
 {
-
+	delete states[StateLabel::MENU];
+	delete states[StateLabel::GAME];
 }
 
 void Context::setActiveState(StateLabel stateName)

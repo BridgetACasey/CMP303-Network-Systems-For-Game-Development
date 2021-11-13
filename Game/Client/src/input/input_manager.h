@@ -19,11 +19,11 @@ enum class InputStatus
 	RELEASED
 };
 
-class Input
+class InputManager
 {
 public:
-	Input();
-	~Input();
+	InputManager();
+	~InputManager();
 
 	const inline void setKeyStatus(sf::Keyboard::Key& key, InputStatus& status) { keys[key] = status; }
 	const inline InputStatus& getKeyStatus(sf::Keyboard::Key& key) const { return keys[key]; }

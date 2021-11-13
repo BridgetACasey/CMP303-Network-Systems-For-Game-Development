@@ -32,11 +32,4 @@ public:
 
 protected:
 	Context* context;
-
-	/*
-	* Used to determine if objects need to be created.
-	* They cannot be created in the state's constructor, as many objects rely on a reference to context,
-	* which is only passed to the class upon it becoming the active state.
-	*/
-	bool firstSetup = true;
 };
