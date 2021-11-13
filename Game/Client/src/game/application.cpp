@@ -7,6 +7,7 @@
 Application::Application()
 {
 	windowManager = new WindowManager();
+	context = new Context();
 }
 
 Application::~Application()
@@ -19,10 +20,18 @@ Application::~Application()
 
 void Application::run()
 {
-	windowManager->run();
+	//windowManager->run();
+	while (windowManager->getWindow()->isOpen())
+	{
+		windowManager->handleEvents();
+
+		context->getActiveState()->handleInput();
+		context->getActiveState()->update(0.0f);
+		context->getActiveState()->render();
+	}
 }
 
-float Application::getDeltaTime()
+float Application::getDeltaTime() const
 {
 	sf::Clock gameClock;
 

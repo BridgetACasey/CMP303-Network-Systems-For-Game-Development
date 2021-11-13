@@ -10,7 +10,7 @@ public:
 	WindowManager();
 	~WindowManager();
 
-	void run();
+	void handleEvents();
 
 	inline sf::RenderWindow* getWindow() const { return window; }
 

@@ -17,7 +17,7 @@ public:
 
 	void setActiveState(StateLabel stateName);
 
-	const inline State* getActiveState() const { return activeState; }
+	inline State* getActiveState() const { return activeState; }
 
 	const inline InputManager* getInputManager() const { return input; }
 

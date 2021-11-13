@@ -13,6 +13,8 @@ Context::Context()
 
 	states[StateLabel::MENU] = menu;
 	states[StateLabel::GAME] = game;
+
+	setActiveState(StateLabel::MENU);
 }
 
 Context::~Context()

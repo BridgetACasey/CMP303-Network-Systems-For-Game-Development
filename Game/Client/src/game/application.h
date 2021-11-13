@@ -3,6 +3,7 @@
 #pragma once
 
 #include "window_manager.h"
+#include "state/context.h"
 
 class Application
 {
@@ -12,10 +13,12 @@ public:
 
 	void run();
 
-	float getDeltaTime();
+	float getDeltaTime() const;
 
 	inline WindowManager* getWindowManager() const { return windowManager; }
 
 private:
 	WindowManager* windowManager;
+
+	Context* context;
 };
