@@ -3,6 +3,7 @@
 #pragma once
 
 #include "state.h"
+#include "object/player.h"
 
 class GameState : public State
 {
@@ -20,4 +21,5 @@ public:
 	void render() override;
 
 private:
+	Player* player;
 };

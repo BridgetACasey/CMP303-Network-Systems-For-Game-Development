@@ -6,10 +6,10 @@
 
 WindowManager::WindowManager()
 {
-    windowSize.x = 800;
-    windowSize.y = 600;
-
-	window = new sf::RenderWindow(sf::VideoMode(windowSize.x, windowSize.y), "Client");
+    resolution.x = 1200;
+    resolution.y = 675;
+    
+    window = new sf::RenderWindow(sf::VideoMode(resolution.x, resolution.y), "Client");
 }
 
 WindowManager::~WindowManager()
@@ -33,7 +33,37 @@ void WindowManager::handleEvents()
 
         if (event.type == sf::Event::Resized)
         {
-            window->setSize(window->getSize());
+            setResolutionScale(event.size.width, event.size.height);
+            setResolution(event.size.width, event.size.height);
         }
     }
+}
+
+void WindowManager::beginRender()
+{
+    window->clear(sf::Color(0, 0, 0, 255));
+}
+
+void WindowManager::endRender()
+{
+    window->display();
+}
+
+void WindowManager::render(sf::Drawable& object)
+{
+    window->draw(object);
+}
+
+const void WindowManager::setResolutionScale(unsigned int width, unsigned int height)
+{
+    resolutionScale.x = (float)width / (float)resolution.x;
+    resolutionScale.y = (float)height / (float)resolution.y;
+}
+
+const void WindowManager::setResolution(unsigned int width, unsigned int height)
+{
+    resolution.x = width;
+    resolution.y = height;
+
+    window->setSize(resolution);
 }

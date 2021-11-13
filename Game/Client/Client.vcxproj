@@ -121,7 +121,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)SFML-2.5.1\include;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)SFML-2.5.1\lib;</AdditionalLibraryDirectories>
       <AdditionalDependencies>sfml-main-d.lib;sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib;sfml-audio-d.lib;sfml-network-d.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -142,7 +142,7 @@ xcopy /y /s "$(SolutionDir)Game\assets\*" "$(OutDir)"</Command>
       <AdditionalIncludeDirectories>$(SolutionDir)SFML-2.5.1\include;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -164,8 +164,10 @@ xcopy /y /s "$(SolutionDir)Game\assets\*" "$(OutDir)"</Command>
     <ClCompile Include="src\object\player.cpp" />
     <ClCompile Include="src\state\context.cpp" />
     <ClCompile Include="src\game\window_manager.cpp" />
+    <ClCompile Include="src\object\ui_button.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="resource.h" />
     <ClInclude Include="src\game\application.h" />
     <ClInclude Include="src\state\game_state.h" />
     <ClInclude Include="src\state\menu_state.h" />
@@ -175,6 +177,10 @@ xcopy /y /s "$(SolutionDir)Game\assets\*" "$(OutDir)"</Command>
     <ClInclude Include="src\state\context.h" />
     <ClInclude Include="src\state\state.h" />
     <ClInclude Include="src\game\window_manager.h" />
+    <ClInclude Include="src\object\ui_button.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Client.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

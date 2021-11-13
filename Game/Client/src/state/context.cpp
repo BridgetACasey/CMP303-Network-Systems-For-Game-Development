@@ -2,11 +2,12 @@
 
 #include "context.h"
 
-Context::Context()
+Context::Context(WindowManager* window)
 {
 	activeState = nullptr;
 
-	input = new InputManager();
+	inputManager = new InputManager();
+	windowManager = window;
 
 	MenuState* menu = new MenuState();
 	GameState* game = new GameState();
@@ -14,7 +15,7 @@ Context::Context()
 	states[StateLabel::MENU] = menu;
 	states[StateLabel::GAME] = game;
 
-	setActiveState(StateLabel::MENU);
+	setActiveState(StateLabel::GAME);
 }
 
 Context::~Context()

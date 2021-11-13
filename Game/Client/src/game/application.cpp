@@ -7,11 +7,16 @@
 Application::Application()
 {
 	windowManager = new WindowManager();
-	context = new Context();
+	context = new Context(windowManager);
 }
 
 Application::~Application()
 {
+	if (context)
+	{
+		delete context;
+	}
+
 	if (windowManager)
 	{
 		delete windowManager;
@@ -20,13 +25,12 @@ Application::~Application()
 
 void Application::run()
 {
-	//windowManager->run();
 	while (windowManager->getWindow()->isOpen())
 	{
 		windowManager->handleEvents();
 
 		context->getActiveState()->handleInput();
-		context->getActiveState()->update(0.0f);
+		context->getActiveState()->update(getDeltaTime());
 		context->getActiveState()->render();
 	}
 }

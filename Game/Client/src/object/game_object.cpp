@@ -4,8 +4,6 @@
 
 GameObject::GameObject()
 {
-	sprite = new sf::RectangleShape();
-
 	collisionBox.height = 1.0f;
 	collisionBox.width = 1.0f;
 
@@ -23,9 +21,9 @@ const void GameObject::update(float deltaTime)
 
 }
 
-const void GameObject::setSize(float width, float height)
+const void GameObject::setObjectSize(float width, float height)
 {
-	sprite->setSize(sf::Vector2f(width, height));
+	setSize(sf::Vector2f(width, height));
 
 	collisionBox.width = width;
 	collisionBox.height = height;

@@ -26,7 +26,7 @@ public:
 	~InputManager();
 
 	inline void setKeyStatus(sf::Keyboard::Key& key, InputStatus& status) { keys[key] = status; }
-	inline InputStatus getKeyStatus(sf::Keyboard::Key& key) const { return keys[key]; }
+	const inline InputStatus& getKeyStatus(sf::Keyboard::Key& key) const { return keys[key]; }
 
 	inline void setMousePosition(int x, int y) { mouse->position.x = x; mouse->position.y = y; }
 	inline void setLeftMouseButton(InputStatus& status) { mouse->leftButton = status; }
