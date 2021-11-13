@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <SFML/Window.hpp>
+#include <SFML/Graphics/RenderWindow.hpp>
 
 class WindowManager
 {
@@ -12,8 +12,10 @@ public:
 
 	void run();
 
-	inline sf::Window* getWindow() const { return window; }
+	inline sf::RenderWindow* getWindow() const { return window; }
 
 private:
-	sf::Window* window;
+	sf::RenderWindow* window;
+
+	sf::Vector2i windowSize;
 };

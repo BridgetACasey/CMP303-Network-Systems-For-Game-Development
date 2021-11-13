@@ -1,10 +1,15 @@
 //@BridgetACasey
 
+#include <SFML/Window/Event.hpp>
+
 #include "window_manager.h"
 
 WindowManager::WindowManager()
 {
-	window = new sf::Window(sf::VideoMode(800, 600), "Client");
+    windowSize.x = 800;
+    windowSize.y = 600;
+
+	window = new sf::RenderWindow(sf::VideoMode(windowSize.x, windowSize.y), "Client");
 }
 
 WindowManager::~WindowManager()
@@ -17,15 +22,23 @@ WindowManager::~WindowManager()
 
 void WindowManager::run()
 {
+    sf::Event event;
+
     while (window->isOpen())
     {
-        sf::Event event;
         while (window->pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
             {
                 window->close();
             }
+
+            if (event.type == sf::Event::Resized)
+            {
+                window->setSize(window->getSize());
+            }
         }
+
+        //Handle input, update, and render here
     }
 }

@@ -21,9 +21,24 @@
     <ClCompile Include="window_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="application.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="state\context.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="window_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="application.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="state\state.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="state\context.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
