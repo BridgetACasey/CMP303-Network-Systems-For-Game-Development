@@ -9,5 +9,8 @@ InputManager::InputManager()
 
 InputManager::~InputManager()
 {
-
+	if (mouse)
+	{
+		delete mouse;
+	}
 }

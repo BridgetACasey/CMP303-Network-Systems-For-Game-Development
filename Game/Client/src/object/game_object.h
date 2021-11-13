@@ -24,7 +24,7 @@ public:
 	const inline void setSpriteTexture(sf::Texture& texture) { sprite->setTexture(&texture); }
 	const inline sf::Texture& getSpriteTexture() const { return *sprite->getTexture(); }
 
-private:
+protected:
 	sf::RectangleShape* sprite;
 	sf::FloatRect collisionBox;
 

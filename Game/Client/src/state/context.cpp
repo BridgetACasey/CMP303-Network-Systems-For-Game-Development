@@ -19,8 +19,15 @@ Context::Context()
 
 Context::~Context()
 {
-	delete states[StateLabel::MENU];
-	delete states[StateLabel::GAME];
+	if (states[StateLabel::MENU])
+	{
+		delete states[StateLabel::MENU];
+	}
+
+	if (states[StateLabel::GAME])
+	{
+		delete states[StateLabel::GAME];
+	}
 }
 
 void Context::setActiveState(StateLabel stateName)
