@@ -32,4 +32,6 @@ public:
 
 protected:
 	Context* context;
+
+	bool firstSetup = true;
 };

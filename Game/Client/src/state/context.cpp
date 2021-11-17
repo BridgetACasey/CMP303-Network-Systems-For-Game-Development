@@ -6,8 +6,8 @@ Context::Context(WindowManager* window)
 {
 	activeState = nullptr;
 
-	inputManager = new InputManager();
 	windowManager = window;
+	inputManager = new InputManager(window);
 
 	MenuState* menu = new MenuState();
 	GameState* game = new GameState();
@@ -15,7 +15,7 @@ Context::Context(WindowManager* window)
 	states[StateLabel::MENU] = menu;
 	states[StateLabel::GAME] = game;
 
-	setActiveState(StateLabel::GAME);
+	setActiveState(StateLabel::MENU);
 }
 
 Context::~Context()

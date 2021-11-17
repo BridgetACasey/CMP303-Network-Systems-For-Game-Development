@@ -1,7 +1,5 @@
 //@BridgetACasey
 
-#include <SFML/Window/Event.hpp>
-
 #include "window_manager.h"
 
 WindowManager::WindowManager()
@@ -18,25 +16,6 @@ WindowManager::~WindowManager()
 	{
 		delete window;
 	}
-}
-
-void WindowManager::handleEvents()
-{
-    sf::Event event;
-
-    while (window->pollEvent(event))
-    {
-        if (event.type == sf::Event::Closed)
-        {
-            window->close();
-        }
-
-        if (event.type == sf::Event::Resized)
-        {
-            setResolutionScale(event.size.width, event.size.height);
-            setResolution(event.size.width, event.size.height);
-        }
-    }
 }
 
 void WindowManager::beginRender()

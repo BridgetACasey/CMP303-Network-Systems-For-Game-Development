@@ -3,6 +3,8 @@
 #pragma once
 
 #include "state.h"
+#include "object/ui_button.h"
+#include "SFML/Graphics/Texture.hpp"
 
 class MenuState : public State
 {
@@ -20,4 +22,6 @@ public:
 	void render() override;
 
 private:
+	UIButton* connectButton;
+	UIButton* quitButton;
 };

@@ -8,7 +8,7 @@ GameState::GameState()
 {
 	player = new Player();
 
-	player->setPosition(sf::Vector2f(500.0f, 500.0f));
+	player->setPosition(sf::Vector2f(575.0f, 300.0f));
 	player->setSize(sf::Vector2f(50.0f, 50.0f));
 
 	sf::Texture* playerTexture = new sf::Texture();
@@ -48,7 +48,9 @@ void GameState::handleInput()
 
 bool GameState::update(float deltaTime)
 {
-	return false;
+	context->getInputManager()->update(deltaTime);
+
+	return true;
 }
 
 void GameState::render()

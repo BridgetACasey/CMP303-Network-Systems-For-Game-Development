@@ -2,8 +2,10 @@
 
 #include "input_manager.h"
 
-InputManager::InputManager()
+InputManager::InputManager(WindowManager* window)
 {
+	windowManager = window;
+	
 	mouse = new Mouse();
 }
 
@@ -13,4 +15,9 @@ InputManager::~InputManager()
 	{
 		delete mouse;
 	}
+}
+
+void InputManager::update(float deltaTime)
+{
+
 }

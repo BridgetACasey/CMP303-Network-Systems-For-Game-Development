@@ -10,19 +10,17 @@ public:
 	WindowManager();
 	~WindowManager();
 
-	void handleEvents();
-
 	void beginRender();
 	void endRender();
 	void render(sf::Drawable& object);
 
+	const void setResolutionScale(unsigned int width, unsigned int height);
+	const void setResolution(unsigned int width, unsigned int height);
+
 	inline sf::RenderWindow* getWindow() const { return window; }
 	const inline sf::Vector2f& getResolutionScale() const { return resolutionScale; }
 	 
-private:
-	const void setResolutionScale(unsigned int width, unsigned int height);
-	const void setResolution(unsigned int width, unsigned int height);
-	
+private:	
 	sf::RenderWindow* window;
 
 	sf::Vector2u resolution;
