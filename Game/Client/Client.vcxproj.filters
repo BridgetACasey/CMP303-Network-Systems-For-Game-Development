@@ -83,5 +83,8 @@
     <ClInclude Include="src\input\chat_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\network\player_data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

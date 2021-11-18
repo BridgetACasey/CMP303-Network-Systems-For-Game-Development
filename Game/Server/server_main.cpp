@@ -1,10 +1,12 @@
 //@BridgetACasey
 
-#include <stdio.h>
+#include "game/application.h"
 
 int main()
 {
-    printf("This is the server application");
+    Application app;
+
+    app.run();
 
     return 0;
 }

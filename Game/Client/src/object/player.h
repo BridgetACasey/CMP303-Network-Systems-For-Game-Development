@@ -16,6 +16,8 @@ public:
 
 	void checkBounds(float screenWidth, float screenHeight);
 
+	inline sf::Vector2f& getVelocity() { return velocity; }
+
 private:
 	void move(float deltaTime);
 

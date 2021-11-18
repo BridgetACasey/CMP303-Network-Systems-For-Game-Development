@@ -4,10 +4,14 @@
 
 #include <SFML/Window/Event.hpp>
 
+#define SERVERIP "127.0.0.1"
+
+#define SERVERPORT 5555
+
 Application::Application()
 {
 	windowManager = new WindowManager();
-	context = new Context(windowManager);
+	context = new Context(windowManager, &socketTCP, &socketUDP);
 }
 
 Application::~Application()
@@ -26,6 +30,9 @@ Application::~Application()
 void Application::run()
 {
 	bool running = true;
+
+	socketTCP.connect(SERVERIP, SERVERPORT);
+	//socketUDP.bind(SERVERPORT, SERVERIP);
 
 	while (running)
 	{

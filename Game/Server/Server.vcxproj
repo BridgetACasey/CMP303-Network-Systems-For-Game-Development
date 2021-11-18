@@ -118,7 +118,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)SFML-2.5.1\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)SFML-2.5.1\include;src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,7 +139,7 @@ xcopy /y /s "$(SolutionDir)Game\assets\*" "$(OutDir)"</Command>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)SFML-2.5.1\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)SFML-2.5.1\include;src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -155,7 +155,12 @@ xcopy /y /s "$(SolutionDir)Game\assets\*" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\game\application.cpp" />
     <ClCompile Include="server_main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\game\application.h" />
+    <ClInclude Include="src\network\player_data.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

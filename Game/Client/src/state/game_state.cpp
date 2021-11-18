@@ -3,6 +3,10 @@
 #include "context.h"
 #include "game_state.h"
 
+#define SERVERIP "127.0.0.1"
+
+#define SERVERPORT 5555
+
 GameState::GameState()
 {
 	player = nullptr;
@@ -81,6 +85,16 @@ bool GameState::update(float deltaTime)
 	{
 		player->checkBounds((float)context->getWindowManager()->getWindow()->getSize().x, (float)context->getWindowManager()->getWindow()->getSize().y);
 		player->update(deltaTime);
+
+		PlayerData playerData;
+
+		playerData.id = 1;
+		playerData.posX = player->getPosition().x;
+		playerData.posY = player->getPosition().y;
+		playerData.velX = player->getVelocity().x;
+		playerData.velY = player->getVelocity().y;
+
+		sendPlayerData(playerData);
 	}
 
 	else
@@ -112,4 +126,13 @@ void GameState::render()
 	context->getWindowManager()->render(*playButton);
 
 	context->getWindowManager()->endRender();
+}
+
+void GameState::sendPlayerData(PlayerData& playerData)
+{
+	sf::Packet packet;
+
+	packet << playerData.id << playerData.posX << playerData.posY << playerData.velX << playerData.velY;
+
+	context->getUDP()->send(packet, SERVERIP, SERVERPORT);
 }

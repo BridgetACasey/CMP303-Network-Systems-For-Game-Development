@@ -121,7 +121,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)SFML-2.5.1\include;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)SFML-2.5.1\lib;</AdditionalLibraryDirectories>
       <AdditionalDependencies>sfml-main-d.lib;sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib;sfml-audio-d.lib;sfml-network-d.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -142,7 +142,7 @@ xcopy /y /s "$(SolutionDir)Game\assets\*" "$(OutDir)"</Command>
       <AdditionalIncludeDirectories>$(SolutionDir)SFML-2.5.1\include;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -169,6 +169,7 @@ xcopy /y /s "$(SolutionDir)Game\assets\*" "$(OutDir)"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\game\application.h" />
+    <ClInclude Include="src\network\player_data.h" />
     <ClInclude Include="src\state\game_state.h" />
     <ClInclude Include="src\state\menu_state.h" />
     <ClInclude Include="src\object\game_object.h" />

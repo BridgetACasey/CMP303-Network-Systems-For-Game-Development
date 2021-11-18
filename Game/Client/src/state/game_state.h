@@ -7,6 +7,7 @@
 #include "state.h"
 #include "object/player.h"
 #include "input/chat_manager.h"
+#include "network/player_data.h"
 
 class GameState : public State
 {
@@ -23,6 +24,8 @@ public:
 	void render() override;
 
 private:
+	void sendPlayerData(PlayerData& playerData);
+
 	Player* player;
 	
 	ChatManager* chatManager;
