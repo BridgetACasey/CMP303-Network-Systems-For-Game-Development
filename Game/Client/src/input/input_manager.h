@@ -29,8 +29,8 @@ public:
 
 	void update(float deltaTime);
 
-	inline void setKeyStatus(sf::Keyboard::Key& key, InputStatus status) { keys[key] = status; }
-	const inline InputStatus& getKeyStatus(sf::Keyboard::Key& key) const { return keys[key]; }
+	inline void setKeyStatus(sf::Keyboard::Key key, InputStatus status) { keys[key] = status; }
+	const inline InputStatus& getKeyStatus(sf::Keyboard::Key key) const { return keys[key]; }
 
 	inline void setMousePosition(int x, int y) { mouse->position.x = x; mouse->position.y = y; }
 	inline void setLeftMouseButton(InputStatus status) { mouse->leftButton = status; }

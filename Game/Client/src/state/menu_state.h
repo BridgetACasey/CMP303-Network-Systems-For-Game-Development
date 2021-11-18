@@ -4,7 +4,6 @@
 
 #include "state.h"
 #include "object/ui_button.h"
-#include "SFML/Graphics/Texture.hpp"
 
 class MenuState : public State
 {
@@ -16,8 +15,7 @@ public:
 
 	void onEnter() override;
 	void onExit() override;
-	
-	void handleInput() override;
+
 	bool update(float deltaTime) override;
 	void render() override;
 

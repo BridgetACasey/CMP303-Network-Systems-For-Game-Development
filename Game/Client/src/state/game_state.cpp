@@ -2,11 +2,20 @@
 
 #include "context.h"
 #include "game_state.h"
-#include "SFML/Graphics/Texture.hpp"
 
 GameState::GameState()
 {
-	player = new Player();
+	player = nullptr;
+}
+
+GameState::~GameState()
+{
+
+}
+
+void GameState::setup()
+{
+	player = new Player(context->getInputManager());
 
 	player->setPosition(sf::Vector2f(575.0f, 300.0f));
 	player->setSize(sf::Vector2f(50.0f, 50.0f));
@@ -21,19 +30,12 @@ GameState::GameState()
 	player->setTexture(playerTexture);
 }
 
-GameState::~GameState()
-{
-
-}
-
-void GameState::setup()
-{
-
-}
-
 void GameState::onEnter()
 {
-
+	if (firstSetup)
+	{
+		setup();
+	}
 }
 
 void GameState::onExit()
@@ -41,14 +43,17 @@ void GameState::onExit()
 
 }
 
-void GameState::handleInput()
-{
-
-}
-
 bool GameState::update(float deltaTime)
 {
 	context->getInputManager()->update(deltaTime);
+
+	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
+	{
+		return false;
+	}
+
+	player->checkBounds((float)context->getWindowManager()->getWindow()->getSize().x, (float)context->getWindowManager()->getWindow()->getSize().y);
+	player->update(deltaTime);
 
 	return true;
 }

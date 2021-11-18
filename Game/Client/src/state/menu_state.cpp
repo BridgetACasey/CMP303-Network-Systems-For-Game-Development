@@ -38,14 +38,14 @@ void MenuState::onExit()
 
 }
 
-void MenuState::handleInput()
-{
-
-}
-
 bool MenuState::update(float deltaTime)
 {
 	context->getInputManager()->update(deltaTime);
+
+	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
+	{
+		return false;
+	}
 
 	if (connectButton->isClicked())
 	{

@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <SFML/System/Clock.hpp>
+
 #include "window_manager.h"
 #include "state/context.h"
 
@@ -13,11 +15,13 @@ public:
 
 	void run();
 
-	float getDeltaTime() const;
+	inline float getDeltaTime() { return gameClock.restart().asSeconds(); }
 
 	inline WindowManager* getWindowManager() const { return windowManager; }
 
 private:
+	sf::Clock gameClock;
+	
 	WindowManager* windowManager;
 
 	Context* context;

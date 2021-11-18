@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "SFML/Graphics/Texture.hpp"
+
 class Context;
 
 enum class StateLabel	//For switching between states in a more readable way
@@ -24,7 +26,6 @@ public:
 	virtual void onEnter() = 0;
 	virtual void onExit() = 0;
 
-	virtual void handleInput() = 0;
 	virtual bool update(float deltaTime) = 0;
 	virtual void render() = 0;
 

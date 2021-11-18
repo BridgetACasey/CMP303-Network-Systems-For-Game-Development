@@ -2,7 +2,6 @@
 
 #include "application.h"
 
-#include <SFML\System\Clock.hpp>
 #include <SFML/Window/Event.hpp>
 
 Application::Application()
@@ -26,7 +25,9 @@ Application::~Application()
 
 void Application::run()
 {
-	while (windowManager->getWindow()->isOpen())
+	bool running = true;
+
+	while (running)
 	{
 		sf::Event event;
 
@@ -35,12 +36,23 @@ void Application::run()
 			if (event.type == sf::Event::Closed)
 			{
 				windowManager->getWindow()->close();
+				running = false;
 			}
 
 			if (event.type == sf::Event::Resized)
 			{
 				windowManager->setResolutionScale(event.size.width, event.size.height);
 				windowManager->setResolution(event.size.width, event.size.height);
+			}
+
+			if (event.type == sf::Event::KeyPressed)
+			{
+				context->getInputManager()->setKeyStatus(event.key.code, InputStatus::PRESSED);
+			}
+
+			if (event.type == sf::Event::KeyReleased)
+			{
+				context->getInputManager()->setKeyStatus(event.key.code, InputStatus::RELEASED);
 			}
 
 			if (event.type == sf::Event::MouseMoved)
@@ -75,15 +87,7 @@ void Application::run()
 			}
 		}
 
-		context->getActiveState()->handleInput();
-		context->getActiveState()->update(getDeltaTime());
+		running = context->getActiveState()->update(getDeltaTime());
 		context->getActiveState()->render();
 	}
-}
-
-float Application::getDeltaTime() const
-{
-	sf::Clock gameClock;
-
-	return  gameClock.restart().asSeconds();
 }
