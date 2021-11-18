@@ -7,7 +7,7 @@ WindowManager::WindowManager()
     resolution.x = 1200;
     resolution.y = 675;
     
-    window = new sf::RenderWindow(sf::VideoMode(resolution.x, resolution.y), "Client");
+    window = new sf::RenderWindow(sf::VideoMode(resolution.x, resolution.y), "Client", sf::Style::Titlebar | sf::Style::Close);
 }
 
 WindowManager::~WindowManager()
@@ -20,7 +20,7 @@ WindowManager::~WindowManager()
 
 void WindowManager::beginRender()
 {
-    window->clear(sf::Color(0, 0, 0, 255));
+    window->clear(sf::Color(96, 96, 128, 255));
 }
 
 void WindowManager::endRender()

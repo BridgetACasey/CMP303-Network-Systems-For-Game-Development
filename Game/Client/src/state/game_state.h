@@ -2,8 +2,11 @@
 
 #pragma once
 
+#include <SFML/Graphics/Font.hpp>
+#include <SFML/Graphics/Text.hpp>
 #include "state.h"
 #include "object/player.h"
+#include "input/chat_manager.h"
 
 class GameState : public State
 {
@@ -21,4 +24,14 @@ public:
 
 private:
 	Player* player;
+	
+	ChatManager* chatManager;
+
+	UIButton* chatButton;
+	UIButton* playButton;
+
+	sf::Font arial;
+	sf::Text chatText;
+
+	bool playing;
 };

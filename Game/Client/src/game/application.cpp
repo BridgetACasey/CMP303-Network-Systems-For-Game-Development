@@ -85,6 +85,19 @@ void Application::run()
 					context->getInputManager()->setRightMouseButton(InputStatus::RELEASED);
 				}
 			}
+
+			if (event.type == sf::Event::TextEntered)
+			{
+				if (event.text.unicode > 31 && event.text.unicode < 127)	//Can be printed to the screen
+				{
+					context->getInputManager()->setCurrentChar((char)event.text.unicode);
+				}
+			}
+
+			else
+			{
+				context->getInputManager()->setCurrentChar(0);
+			}
 		}
 
 		running = context->getActiveState()->update(getDeltaTime());

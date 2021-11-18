@@ -40,10 +40,15 @@ public:
 	inline InputStatus& getLeftMouseButton() const { return mouse->leftButton; }
 	inline InputStatus& getRightMouseButton() const { return mouse->rightButton; }
 
+	inline void setCurrentChar(char current) { currentCharacter = current; }
+	inline char getCurrentChar() const { return currentCharacter; }
+
 private:
 	WindowManager* windowManager;
 	
 	Mouse* mouse;
 
 	InputStatus keys[100]{ InputStatus::NONE };
+
+	char currentCharacter;
 };

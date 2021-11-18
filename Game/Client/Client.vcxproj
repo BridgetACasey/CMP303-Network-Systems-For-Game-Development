@@ -165,6 +165,7 @@ xcopy /y /s "$(SolutionDir)Game\assets\*" "$(OutDir)"</Command>
     <ClCompile Include="src\state\context.cpp" />
     <ClCompile Include="src\game\window_manager.cpp" />
     <ClCompile Include="src\object\ui_button.cpp" />
+    <ClCompile Include="src\input\chat_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\game\application.h" />
@@ -177,6 +178,7 @@ xcopy /y /s "$(SolutionDir)Game\assets\*" "$(OutDir)"</Command>
     <ClInclude Include="src\state\state.h" />
     <ClInclude Include="src\game\window_manager.h" />
     <ClInclude Include="src\object\ui_button.h" />
+    <ClInclude Include="src\input\chat_manager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

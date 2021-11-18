@@ -16,12 +16,12 @@ MenuState::~MenuState()
 
 void MenuState::setup()
 {
-	connectButton = new UIButton(context->getInputManager(), "assets/potatolizard.png", "assets/wonky-jaw.png");
-	connectButton->setPosition(sf::Vector2f(550.0f, 300.0f));
+	connectButton = new UIButton(context->getInputManager(), "assets/connect-active.png", "assets/connect-idle.png");
+	connectButton->setPosition(sf::Vector2f(550.0f, 200.0f));
 	connectButton->setSize(sf::Vector2f(125.0f, 125.0f));
 
-	quitButton = new UIButton(context->getInputManager(), "assets/potatolizard.png", "assets/wonky-jaw.png");
-	quitButton->setPosition(sf::Vector2f(550.0f, 450.0f));
+	quitButton = new UIButton(context->getInputManager(), "assets/quit-active.png", "assets/quit-idle.png");
+	quitButton->setPosition(sf::Vector2f(550.0f, 400.0f));
 	quitButton->setSize(sf::Vector2f(125.0f, 125.0f));
 }
 
