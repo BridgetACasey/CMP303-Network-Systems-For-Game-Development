@@ -4,10 +4,6 @@
 
 #include <SFML/Window/Event.hpp>
 
-#define SERVERIP "127.0.0.1"
-
-#define SERVERPORT 5555
-
 Application::Application()
 {
 	windowManager = new WindowManager();
@@ -31,9 +27,6 @@ void Application::run()
 {
 	bool running = true;
 
-	socketTCP.connect(SERVERIP, SERVERPORT);
-	//socketUDP.bind(SERVERPORT, SERVERIP);
-
 	while (running)
 	{
 		sf::Event event;
@@ -42,6 +35,7 @@ void Application::run()
 		{
 			if (event.type == sf::Event::Closed)
 			{
+				socketTCP.disconnect();
 				windowManager->getWindow()->close();
 				running = false;
 			}

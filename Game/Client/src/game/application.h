@@ -3,7 +3,6 @@
 #pragma once
 
 #include <SFML/System/Clock.hpp>
-#include <SFML/Network.hpp>
 
 #include "window_manager.h"
 #include "state/context.h"

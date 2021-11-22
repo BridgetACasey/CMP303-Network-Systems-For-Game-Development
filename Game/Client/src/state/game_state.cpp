@@ -136,3 +136,12 @@ void GameState::sendPlayerData(PlayerData& playerData)
 
 	context->getUDP()->send(packet, SERVERIP, SERVERPORT);
 }
+
+void GameState::sendChatData(ChatData& chatData)
+{
+	sf::Packet packet;
+
+	packet << chatData.messageBuffer;
+
+	context->getTCP()->send(packet);
+}

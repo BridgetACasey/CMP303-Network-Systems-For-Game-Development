@@ -29,6 +29,7 @@ UIButton::~UIButton()
 
 bool UIButton::isHovering()
 {
+	//The bounds of the ui button object
 	float left = getPosition().x;
 	float right = getPosition().x + getSize().x;
 	float top = getPosition().y;

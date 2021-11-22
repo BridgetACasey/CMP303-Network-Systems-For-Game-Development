@@ -42,19 +42,21 @@ bool MenuState::update(float deltaTime)
 {
 	context->getInputManager()->update(deltaTime);
 
-	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
+	if ((context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED) || quitButton->isClicked())
 	{
+		context->getTCP()->disconnect();
+		
 		return false;
 	}
 
 	if (connectButton->isClicked())
 	{
+		if (context->getTCP()->connect("127.0.0.1", 5555) != sf::TcpSocket::Done)
+		{
+			//rip
+		}
+		
 		context->setActiveState(StateLabel::GAME);
-	}
-
-	if (quitButton->isClicked())
-	{
-		return false;
 	}
 
 	return true;

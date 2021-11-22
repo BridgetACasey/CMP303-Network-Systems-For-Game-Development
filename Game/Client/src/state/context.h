@@ -4,9 +4,7 @@
 
 #include <map>
 
-#include <SFML/Network/TcpSocket.hpp>
-#include <SFML/Network/UdpSocket.hpp>
-#include <SFML/Network/Packet.hpp>
+#include <SFML/Network.hpp>
 
 #include "input/input_manager.h"
 #include "game/window_manager.h"

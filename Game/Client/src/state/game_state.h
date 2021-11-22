@@ -8,6 +8,7 @@
 #include "object/player.h"
 #include "input/chat_manager.h"
 #include "network/player_data.h"
+#include "network/chat_data.h"
 
 class GameState : public State
 {
@@ -25,6 +26,7 @@ public:
 
 private:
 	void sendPlayerData(PlayerData& playerData);
+	void sendChatData(ChatData& chatData);
 
 	Player* player;
 	

@@ -1,6 +1,6 @@
 //@BridgetACasey
 
-#include "game/application.h"
+#include "application.h"
 
 int main()
 {
