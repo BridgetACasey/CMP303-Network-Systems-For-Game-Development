@@ -22,10 +22,8 @@ public:
 private:
 	sf::Clock gameClock;
 	
+	NetworkManager* networkManager;
 	WindowManager* windowManager;
 
 	Context* context;
-
-	sf::TcpSocket socketTCP;
-	sf::UdpSocket socketUDP;
 };

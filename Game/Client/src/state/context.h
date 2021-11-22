@@ -4,17 +4,16 @@
 
 #include <map>
 
-#include <SFML/Network.hpp>
-
 #include "input/input_manager.h"
 #include "game/window_manager.h"
+#include "network/network_manager.h"
 #include "menu_state.h"
 #include "game_state.h"
 
 class Context
 {
 public:
-	Context(WindowManager* window, sf::TcpSocket* tcp, sf::UdpSocket* udp);
+	Context(NetworkManager* network, WindowManager* window);
 	~Context();
 
 	void setActiveState(StateLabel stateName);
@@ -22,10 +21,8 @@ public:
 	inline State* getActiveState() const { return activeState; }
 
 	inline InputManager* getInputManager() const { return inputManager; }
+	inline NetworkManager* getNetworkManager() const { return networkManager; }
 	inline WindowManager* getWindowManager() const { return windowManager; }
-
-	inline sf::TcpSocket* getTCP() const { return socketTCP; }
-	inline sf::UdpSocket* getUDP() const { return socketUDP; }
 
 private:
 	State* activeState;
@@ -33,7 +30,7 @@ private:
 	std::map<StateLabel, State*> states;
 
 	InputManager* inputManager;
-
+	NetworkManager* networkManager;
 	WindowManager* windowManager;
 
 	sf::TcpSocket* socketTCP;

@@ -5,6 +5,7 @@
 #include <vector>
 #include <SFML/Network.hpp>
 #include "player_data.h"
+#include "chat_data.h"
 
 class Application
 {
@@ -18,7 +19,8 @@ private:
 	void connectClients();
 	void disconnectClients();
 
-	void receiveData();
+	void handleDataTCP();
+	void handleDataUDP();
 
 	sf::TcpListener listener;
 	sf::SocketSelector selector;
@@ -26,6 +28,5 @@ private:
 	std::vector<sf::TcpSocket*> clientsTCP;
 	std::vector<sf::UdpSocket*> clientsUDP;
 
-	sf::IpAddress serverAddress;
-	int serverPort;
+	std::vector<ChatData> chatHistory;
 };

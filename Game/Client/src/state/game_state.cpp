@@ -3,13 +3,10 @@
 #include "context.h"
 #include "game_state.h"
 
-#define SERVERIP "127.0.0.1"
-
-#define SERVERPORT 5555
-
 GameState::GameState()
 {
 	player = nullptr;
+	chatBar = nullptr;
 	chatManager = nullptr;
 	chatButton = nullptr;
 	playButton = nullptr;
@@ -40,22 +37,17 @@ void GameState::setup()
 
 	player->setTexture(playerTexture);
 
-	if (!arial.loadFromFile("assets/arial.ttf"))
-	{
-		printf("could not load font");
-	}
-
-	chatText.setFont(arial);
-	chatText.setCharacterSize(24);
-	chatText.setFillColor(sf::Color::White);
-	chatText.setPosition(sf::Vector2f(50.0f, 600.0f));
+	chatBar = new GameObject();
+	chatBar->setFillColor(sf::Color(0, 0, 0, 64));
+	chatBar->setSize(sf::Vector2f(1030.0f, 30.0f));
+	chatBar->setPosition(sf::Vector2f(30.0f, 615.0f));
 
 	playButton = new UIButton(context->getInputManager(), "assets/play-active.png", "assets/play-idle.png");
-	playButton->setPosition(sf::Vector2f(1000.0f, 400.0f));
+	playButton->setPosition(sf::Vector2f(1100.0f, 475.0f));
 	playButton->setSize(sf::Vector2f(75.0f, 75.0f));
 
 	chatButton = new UIButton(context->getInputManager(), "assets/chat-active.png", "assets/chat-idle.png");
-	chatButton->setPosition(sf::Vector2f(1000.0f, 500.0f));
+	chatButton->setPosition(sf::Vector2f(1100.0f, 575.0f));
 	chatButton->setSize(sf::Vector2f(75.0f, 75.0f));
 }
 
@@ -76,6 +68,13 @@ bool GameState::update(float deltaTime)
 {
 	context->getInputManager()->update(deltaTime);
 
+	ChatData receiveChat;
+	context->getNetworkManager()->receiveDataTCP(receiveChat);
+	if (receiveChat.messageBuffer.getSize() > 0)
+	{
+		chatManager->addNewMessage(receiveChat.userName, receiveChat.messageBuffer);
+	}
+
 	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
 	{
 		return false;
@@ -93,14 +92,21 @@ bool GameState::update(float deltaTime)
 		playerData.posY = player->getPosition().y;
 		playerData.velX = player->getVelocity().x;
 		playerData.velY = player->getVelocity().y;
-
-		sendPlayerData(playerData);
 	}
 
 	else
 	{
 		chatManager->updateMessageStream(deltaTime);
-		chatText.setString(chatManager->getMessage());
+
+		if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Enter) == InputStatus::PRESSED)
+		{
+			context->getInputManager()->setKeyStatus(sf::Keyboard::Key::Enter, InputStatus::NONE);
+
+			ChatData sendChat;
+			sendChat.userName = "The_Player45";
+			sendChat.messageBuffer = chatManager->getInputText()->getString();
+			context->getNetworkManager()->sendDataTCP(sendChat);
+		}
 	}
 
 	if (chatButton->isClicked())
@@ -121,27 +127,17 @@ void GameState::render()
 	context->getWindowManager()->beginRender();
 
 	context->getWindowManager()->render(*player);
-	context->getWindowManager()->render(chatText);
+
 	context->getWindowManager()->render(*chatButton);
 	context->getWindowManager()->render(*playButton);
 
+	for (sf::Text text : chatManager->getChatMessages())
+	{
+		context->getWindowManager()->render(text);
+	}
+
+	context->getWindowManager()->render(*chatBar);
+	context->getWindowManager()->render(*chatManager->getInputText());
+
 	context->getWindowManager()->endRender();
-}
-
-void GameState::sendPlayerData(PlayerData& playerData)
-{
-	sf::Packet packet;
-
-	packet << playerData.id << playerData.posX << playerData.posY << playerData.velX << playerData.velY;
-
-	context->getUDP()->send(packet, SERVERIP, SERVERPORT);
-}
-
-void GameState::sendChatData(ChatData& chatData)
-{
-	sf::Packet packet;
-
-	packet << chatData.messageBuffer;
-
-	context->getTCP()->send(packet);
 }

@@ -44,17 +44,14 @@ bool MenuState::update(float deltaTime)
 
 	if ((context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED) || quitButton->isClicked())
 	{
-		context->getTCP()->disconnect();
+		context->getNetworkManager()->requestDisconnection();
 		
 		return false;
 	}
 
 	if (connectButton->isClicked())
 	{
-		if (context->getTCP()->connect("127.0.0.1", 5555) != sf::TcpSocket::Done)
-		{
-			//rip
-		}
+		context->getNetworkManager()->requestConnection();
 		
 		context->setActiveState(StateLabel::GAME);
 	}

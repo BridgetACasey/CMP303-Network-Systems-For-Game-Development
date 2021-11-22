@@ -2,13 +2,11 @@
 
 #include "context.h"
 
-Context::Context(WindowManager* window, sf::TcpSocket* tcp, sf::UdpSocket* udp)
+Context::Context(NetworkManager* network, WindowManager* window)
 {
 	activeState = nullptr;
 
-	socketTCP = tcp;
-	socketUDP = udp;
-
+	networkManager = network;
 	windowManager = window;
 	inputManager = new InputManager(window);
 

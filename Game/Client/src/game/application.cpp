@@ -6,8 +6,10 @@
 
 Application::Application()
 {
+	networkManager = new NetworkManager();
 	windowManager = new WindowManager();
-	context = new Context(windowManager, &socketTCP, &socketUDP);
+
+	context = new Context(networkManager, windowManager);
 }
 
 Application::~Application()
@@ -35,7 +37,7 @@ void Application::run()
 		{
 			if (event.type == sf::Event::Closed)
 			{
-				socketTCP.disconnect();
+				networkManager->requestDisconnection();
 				windowManager->getWindow()->close();
 				running = false;
 			}

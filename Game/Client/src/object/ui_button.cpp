@@ -1,5 +1,7 @@
 //@BridgetACasey
 
+#include <iostream>
+
 #include "ui_button.h"
 
 UIButton::UIButton(InputManager* input, const char* active, const char* idle)
@@ -11,12 +13,12 @@ UIButton::UIButton(InputManager* input, const char* active, const char* idle)
 
 	if (!activeTexture->loadFromFile(active))
 	{
-		printf("could not load texture");
+		std::cout << "could not load active texture" << std::endl;
 	}
 
 	if (!idleTexture->loadFromFile(idle))
 	{
-		printf("could not load texture");
+		std::cout << "could not load idle texture" << std::endl;
 	}
 
 	setTexture(idleTexture);
