@@ -68,45 +68,13 @@ bool GameState::update(float deltaTime)
 {
 	context->getInputManager()->update(deltaTime);
 
-	ChatData receiveChat;
-	context->getNetworkManager()->receiveDataTCP(receiveChat);
-	if (receiveChat.messageBuffer.getSize() > 0)
-	{
-		chatManager->addNewMessage(receiveChat.userName, receiveChat.messageBuffer);
-	}
+	updatePlayerPositions(deltaTime);
+
+	updateChatLog(deltaTime);
 
 	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
 	{
 		return false;
-	}
-
-	if (playing)
-	{
-		player->checkBounds((float)context->getWindowManager()->getWindow()->getSize().x, (float)context->getWindowManager()->getWindow()->getSize().y);
-		player->update(deltaTime);
-
-		PlayerData playerData;
-
-		playerData.id = 1;
-		playerData.posX = player->getPosition().x;
-		playerData.posY = player->getPosition().y;
-		playerData.velX = player->getVelocity().x;
-		playerData.velY = player->getVelocity().y;
-	}
-
-	else
-	{
-		chatManager->updateMessageStream(deltaTime);
-
-		if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Enter) == InputStatus::PRESSED)
-		{
-			context->getInputManager()->setKeyStatus(sf::Keyboard::Key::Enter, InputStatus::NONE);
-
-			ChatData sendChat;
-			sendChat.userName = "The_Player45";
-			sendChat.messageBuffer = chatManager->getInputText()->getString();
-			context->getNetworkManager()->sendDataTCP(sendChat);
-		}
 	}
 
 	if (chatButton->isClicked())
@@ -140,4 +108,52 @@ void GameState::render()
 	context->getWindowManager()->render(*chatManager->getInputText());
 
 	context->getWindowManager()->endRender();
+}
+
+void GameState::updatePlayerPositions(float deltaTime)
+{
+	if (playing)
+	{
+		player->checkBounds((float)context->getWindowManager()->getWindow()->getSize().x, (float)context->getWindowManager()->getWindow()->getSize().y);
+		player->update(deltaTime);
+	}
+
+	//Send player data by UDP
+	PlayerData playerData;
+
+	playerData.id = 1;
+	playerData.posX = player->getPosition().x;
+	playerData.posY = player->getPosition().y;
+	playerData.spritePath = "assets/potatolizard.png";
+
+	context->getNetworkManager()->sendDataUDP(playerData);
+
+	//Receive player data from the server
+	PlayerData receivePlayer;
+	context->getNetworkManager()->receiveDataUDP(receivePlayer);
+}
+
+void GameState::updateChatLog(float deltaTime)
+{
+	ChatData receiveChat;
+	context->getNetworkManager()->receiveDataTCP(receiveChat);
+	if (receiveChat.messageBuffer.getSize() > 0)
+	{
+		chatManager->addNewMessage(receiveChat.userName, receiveChat.messageBuffer);
+	}
+
+	if (!playing)
+	{
+		chatManager->updateMessageStream(deltaTime);
+
+		if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Enter) == InputStatus::PRESSED)
+		{
+			context->getInputManager()->setKeyStatus(sf::Keyboard::Key::Enter, InputStatus::NONE);
+
+			ChatData sendChat;
+			sendChat.userName = "The_Player45";
+			sendChat.messageBuffer = chatManager->getInputText()->getString();
+			context->getNetworkManager()->sendDataTCP(sendChat);
+		}
+	}
 }

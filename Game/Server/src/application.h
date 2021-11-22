@@ -3,7 +3,10 @@
 #pragma once
 
 #include <vector>
+#include <SFML/System/Clock.hpp>
 #include <SFML/Network.hpp>
+#include "window_manager.h"
+#include "game_object.h"
 #include "player_data.h"
 #include "chat_data.h"
 
@@ -15,13 +18,21 @@ public:
 
 	void run();
 
+	inline float getDeltaTime() { return gameClock.restart().asSeconds(); }
+
 private:
+	void update(float deltaTime);
+	void render();
+	
 	void connectClients();
 	void disconnectClients();
 
 	void handleDataTCP();
 	void handleDataUDP();
 
+	sf::Clock gameClock;
+	std::vector<GameObject*> clientPlayers;
+	
 	sf::TcpListener listener;
 	sf::SocketSelector selector;
 
@@ -29,4 +40,6 @@ private:
 	std::vector<sf::UdpSocket*> clientsUDP;
 
 	std::vector<ChatData> chatHistory;
+
+	WindowManager* windowManager;
 };

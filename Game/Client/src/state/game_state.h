@@ -21,6 +21,9 @@ public:
 	void render() override;
 
 private:
+	void updatePlayerPositions(float deltaTime);
+	void updateChatLog(float deltaTime);
+	
 	Player* player;
 	
 	GameObject* chatBar;

@@ -20,7 +20,7 @@ public:
 	void receiveDataTCP(ChatData& chatData);
 
 	void sendDataUDP(PlayerData& playerData);
-	void receiveDataUDP();
+	void receiveDataUDP(PlayerData& playerData);
 
 private:
 	sf::TcpSocket* socketTCP;
