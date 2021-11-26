@@ -15,8 +15,6 @@ const int serverPortUDP = 4444;
 
 Application::Application()
 {
-	//windowManager = new WindowManager();
-	windowManager = nullptr;
 	serverUDP = new sf::UdpSocket();
 }
 
@@ -54,35 +52,7 @@ void Application::run()
 		}
 
 		handleDataUDP();
-
-		//sf::Event event;
-		//
-		//while (windowManager->getWindow()->pollEvent(event))
-		//{
-		//	if (event.type == sf::Event::Closed)
-		//	{
-		//		windowManager->getWindow()->close();
-		//		running = false;
-		//	}
-		//
-		//	update(getDeltaTime());
-		//	render();
-		//}
 	}
-}
-
-void Application::update(float deltaTime)
-{
-
-}
-
-void Application::render()
-{
-	windowManager->beginRender();
-
-	//Render players and chat log
-
-	windowManager->endRender();
 }
 
 void Application::connectClients()
@@ -208,6 +178,9 @@ void Application::handleDataUDP()
 
 			playerData.total = clientsUDP.size();
 
+			std::string sprite = "assets/potatolizard.png";
+			playerData.spritePath = sprite;
+
 			sf::Packet sentPacket;
 
 			if (sentPacket << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.spritePath)
@@ -225,4 +198,32 @@ void Application::handleDataUDP()
 			}
 		}
 	}
+}
+
+sf::Vector2f Application::runPrediction(float gameTime)
+{
+	float predictedX = -1.0f;
+	float predictedY = -1.0f;
+
+	//const int msize = m_Messages.size();
+
+	//if (msize < 3)
+	//{
+	//	return sf::Vector2f(predictedX, predictedX);
+	//}
+
+	//const TankMessage& msg0 = m_Messages[msize - 1];
+	//const TankMessage& msg1 = m_Messages[msize - 2];
+	//const TankMessage& msg2 = m_Messages[msize - 3];
+
+	// FIXME: Implement prediction here!
+	// You have:
+	// - the history of position messages received, in "m_Messages"
+	//   (msg0 is the most recent, msg1 the 2nd most recent, msg2 the 3rd most recent)
+	// - the current time, in "gameTime"
+	//
+	// You need to update:
+	// - the predicted position at the current time, in "predictedX" and "predictedY"
+
+	return sf::Vector2f(predictedX, predictedY);
 }

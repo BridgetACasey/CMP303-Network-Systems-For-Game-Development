@@ -18,6 +18,9 @@ public:
 
 	inline sf::Vector2f& getVelocity() { return velocity; }
 
+	inline void setPlayerID(int id) { playerID = id; }
+	inline int getPlayerID() const { return playerID; }
+
 private:
 	void move(float deltaTime);
 
@@ -25,4 +28,6 @@ private:
 
 	sf::Vector2f velocity;
 	float speed;
+
+	int playerID;
 };

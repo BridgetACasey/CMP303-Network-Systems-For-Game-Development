@@ -8,7 +8,9 @@ Player::Player(InputManager* input)
 	inputManager = input;
 
 	velocity = sf::Vector2f(0.0f, 0.0f);
-	speed = 100.0f;
+	speed = 250.0f;
+
+	playerID = 0;
 }
 
 Player::~Player()

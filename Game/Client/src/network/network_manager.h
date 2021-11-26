@@ -22,6 +22,9 @@ public:
 	void sendDataUDP(PlayerData& playerData);
 	void receiveDataUDP(PlayerData& playerData);
 
+	inline sf::TcpSocket* getSocketTCP() const { return socketTCP; }
+	inline sf::UdpSocket* getSocketUDP() const { return socketUDP; }
+
 private:
 	sf::TcpSocket* socketTCP;
 	sf::UdpSocket* socketUDP;

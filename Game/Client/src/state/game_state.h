@@ -21,13 +21,13 @@ public:
 	void render() override;
 
 private:
-	void createNewPlayerInstance();
+	void createNewPlayerInstance(int id, std::string& sprite);
 	void updatePlayerPositions(float deltaTime);
 	void updateChatLog(float deltaTime);
 	
 	Player* player;
 
-	std::vector<GameObject*> otherPlayers;
+	std::vector<Player*> otherPlayers;
 	
 	GameObject* chatBar;
 
