@@ -7,15 +7,21 @@
 const sf::IpAddress serverAddress = sf::IpAddress::getLocalAddress();
 const int serverPortTCP = 5555;
 const int serverPortUDP = 4444;
-const int clientPortUDP = 4445;
 
 NetworkManager::NetworkManager()
 {
 	socketTCP = new sf::TcpSocket();
 	socketUDP = new sf::UdpSocket();
 
-	socketUDP->bind(clientPortUDP);
-	socketUDP->setBlocking(false);
+	if (socketUDP->bind(sf::Socket::AnyPort) != sf::UdpSocket::Done)
+	{
+		std::cout << "UDP socket failed to bind to port" << std::endl;
+	}
+
+	else
+	{
+		std::cout << "UDP socket bound to port " << socketUDP->getLocalPort() << std::endl;
+	}
 }
 
 NetworkManager::~NetworkManager()
@@ -72,7 +78,7 @@ void NetworkManager::sendDataUDP(PlayerData& playerData)
 {
 	sf::Packet packet;
 
-	if (packet << playerData.id << playerData.posX << playerData.posY << playerData.spritePath)
+	if (packet << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.spritePath)
 	{
 		//std::cout << "(UDP) PACKED data successfully" << std::endl;
 
@@ -91,11 +97,11 @@ void NetworkManager::receiveDataUDP(PlayerData& playerData)
 
 	if (socketUDP->receive(packet, address, port) == sf::Socket::Done)
 	{
-		std::cout << "(UDP) RECEIVED packet from " << address.toString() << " on port " << port << std::endl;
+		//std::cout << "(UDP) RECEIVED packet from " << address.toString() << " on port " << port << std::endl;
 
-		if (packet >> playerData.id >> playerData.posX >> playerData.posY >> playerData.spritePath)
+		if (packet >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.spritePath)
 		{
-			std::cout << "(UDP) UNPACKED data successfully - id: " << playerData.id << " pos x: " << playerData.posX << " pos y: " << playerData.posY << std::endl;
+			//std::cout << "(UDP) UNPACKED data successfully - id: " << playerData.id << " pos x: " << playerData.posX << " pos y: " << playerData.posY << std::endl;
 		}
 	}
 }

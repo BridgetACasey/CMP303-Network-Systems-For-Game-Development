@@ -83,6 +83,11 @@ void ChatManager::addNewMessage(sf::String& name, sf::String& msg)
 	message.setFillColor(sf::Color(192, 192, 192, 255));
 	message.setPosition(sf::Vector2f(inputText->getPosition().x, inputText->getPosition().y - 30.0f));
 
+	if (chatMessages.size() > 18)	//Only 18 text messages should be displayed on the screen at once
+	{
+		chatMessages.erase(chatMessages.begin());
+	}
+
 	chatMessages.push_back(message);
 
 	for (sf::Text& chat : chatMessages)

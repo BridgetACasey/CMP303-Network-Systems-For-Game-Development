@@ -42,18 +42,18 @@ bool MenuState::update(float deltaTime)
 {
 	context->getInputManager()->update(deltaTime);
 
+	if (connectButton->isClicked())
+	{
+		context->getNetworkManager()->requestConnection();
+
+		context->setActiveState(StateLabel::GAME);
+	}
+
 	if ((context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED) || quitButton->isClicked())
 	{
 		context->getNetworkManager()->requestDisconnection();
 		
 		return false;
-	}
-
-	if (connectButton->isClicked())
-	{
-		context->getNetworkManager()->requestConnection();
-		
-		context->setActiveState(StateLabel::GAME);
 	}
 
 	return true;

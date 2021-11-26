@@ -94,6 +94,11 @@ void GameState::render()
 {
 	context->getWindowManager()->beginRender();
 
+	for (GameObject* otherPlayer : otherPlayers)
+	{
+		context->getWindowManager()->render(*otherPlayer);
+	}
+
 	context->getWindowManager()->render(*player);
 
 	context->getWindowManager()->render(*chatButton);
@@ -108,6 +113,25 @@ void GameState::render()
 	context->getWindowManager()->render(*chatManager->getInputText());
 
 	context->getWindowManager()->endRender();
+}
+
+void GameState::createNewPlayerInstance()
+{
+	GameObject* otherPlayer = new GameObject();
+
+	otherPlayer->setPosition(sf::Vector2f(575.0f, 300.0f));
+	otherPlayer->setSize(sf::Vector2f(50.0f, 50.0f));
+
+	sf::Texture* playerTexture = new sf::Texture();
+
+	if (!playerTexture->loadFromFile("assets/potatolizard.png"))
+	{
+		printf("could not load texture");
+	}
+
+	otherPlayer->setTexture(playerTexture);
+
+	otherPlayers.push_back(otherPlayer);
 }
 
 void GameState::updatePlayerPositions(float deltaTime)
@@ -131,6 +155,16 @@ void GameState::updatePlayerPositions(float deltaTime)
 	//Receive player data from the server
 	PlayerData receivePlayer;
 	context->getNetworkManager()->receiveDataUDP(receivePlayer);
+
+	if (receivePlayer.total > (otherPlayers.size() + 1))
+	{
+		createNewPlayerInstance();
+	}
+
+	else if (receivePlayer.total < (otherPlayers.size() + 1))
+	{
+		//remove the player that has disconnected
+	}
 }
 
 void GameState::updateChatLog(float deltaTime)

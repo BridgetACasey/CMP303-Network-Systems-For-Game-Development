@@ -17,8 +17,9 @@ enum class InputStatus
 
 struct Mouse
 {
-	sf::Vector2u position;
-	InputStatus leftButton, rightButton;
+	sf::Vector2u position = sf::Vector2u(0, 0);
+	InputStatus leftButton = InputStatus::NONE;
+	InputStatus rightButton = InputStatus::NONE;
 };
 
 class InputManager

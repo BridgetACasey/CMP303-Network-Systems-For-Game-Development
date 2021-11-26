@@ -12,11 +12,12 @@ const int MAX_CLIENTS = 2;
 const sf::IpAddress serverAddress = sf::IpAddress::getLocalAddress();
 const int serverPortTCP = 5555;
 const int serverPortUDP = 4444;
-const int clientPortUDP = 4445;
 
 Application::Application()
 {
-	windowManager = new WindowManager();
+	//windowManager = new WindowManager();
+	windowManager = nullptr;
+	serverUDP = new sf::UdpSocket();
 }
 
 Application::~Application()
@@ -34,6 +35,11 @@ void Application::run()
 
 	selector.add(listener);
 
+	if (serverUDP->bind(serverPortUDP, serverAddress) != sf::Socket::Done)
+	{
+		std::cout << "Failed to bind server to port " << serverPortUDP << std::endl;
+	}
+
 	while (running)
 	{
 		if (selector.wait(sf::microseconds(1)))
@@ -49,19 +55,19 @@ void Application::run()
 
 		handleDataUDP();
 
-		sf::Event event;
-
-		while (windowManager->getWindow()->pollEvent(event))
-		{
-			if (event.type == sf::Event::Closed)
-			{
-				windowManager->getWindow()->close();
-				running = false;
-			}
-
-			update(getDeltaTime());
-			render();
-		}
+		//sf::Event event;
+		//
+		//while (windowManager->getWindow()->pollEvent(event))
+		//{
+		//	if (event.type == sf::Event::Closed)
+		//	{
+		//		windowManager->getWindow()->close();
+		//		running = false;
+		//	}
+		//
+		//	update(getDeltaTime());
+		//	render();
+		//}
 	}
 }
 
@@ -93,13 +99,6 @@ void Application::connectClients()
 			selector.add(*clientTCP);
 
 			std::cout << "New client has connected on " << clientTCP->getRemoteAddress().toString() << std::endl;
-
-			//Create UDP sockets for new connections
-			sf::UdpSocket* clientUDP = new sf::UdpSocket();
-
-			clientUDP->bind(serverPortUDP);
-
-			clientsUDP.push_back(clientUDP);
 
 			GameObject* player = new GameObject();
 
@@ -155,6 +154,11 @@ void Application::handleDataTCP()
 					{
 						std::cout << "(TCP) UNPACKED data successfully - chat message: " << chatData.messageBuffer.toAnsiString() << std::endl;
 
+						if (chatHistory.size() > 100)	//Only keeping a log of the most recent 100 messages sent to the server
+						{
+							chatHistory.erase(chatHistory.begin());
+						}
+
 						chatHistory.push_back(chatData);
 						currentMessages.push_back(chatData);
 					}
@@ -185,44 +189,38 @@ void Application::handleDataTCP()
 
 void Application::handleDataUDP()
 {
-	std::vector<PlayerData> currentPlayers;
-
 	//Receiving new messages from the clients
-	for (sf::UdpSocket* client : clientsUDP)
+	sf::Packet receivedPacket;
+	sf::IpAddress address;
+	unsigned short port;
+
+	if (serverUDP->receive(receivedPacket, address, port) == sf::Socket::Done)
 	{
-		sf::Packet receivedPacket;
-		sf::IpAddress address;
-		unsigned short port;
+		//std::cout << "(UDP) RECEIVED packet from " << address.toString() << " on port " << port << std::endl;
 
-		if (client->receive(receivedPacket, address, port) == sf::Socket::Done)
+		PlayerData playerData;
+
+		if (receivedPacket >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.spritePath)
 		{
-			std::cout << "(UDP) RECEIVED packet from " << address.toString() << " on port " << port << std::endl;
+			//std::cout << "(UDP) UNPACKED data successfully - id: " << playerData.id << " pos x: " << playerData.posX << " pos y: " << playerData.posY << std::endl;
 
-			PlayerData playerData;
+			clientsUDP.insert(port);
 
-			if (receivedPacket >> playerData.id >> playerData.posX >> playerData.posY >> playerData.spritePath)
-			{
-				std::cout << "(UDP) UNPACKED data successfully - id: " << playerData.id << " pos x: " << playerData.posX << " pos y: " << playerData.posY << std::endl;
+			playerData.total = clientsUDP.size();
 
-				currentPlayers.push_back(playerData);
-			}
-		}
-	}
-
-	//Sending messages back to clients
-	for (sf::UdpSocket* client : clientsUDP)
-	{
-		for (auto& player : currentPlayers)
-		{
 			sf::Packet sentPacket;
 
-			if (sentPacket << player.id << player.posX << player.posY << player.spritePath)
+			if (sentPacket << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.spritePath)
 			{
 				//std::cout << "(UDP) PACKED data successfully" << std::endl;
+			}
 
-				if (client->send(sentPacket, serverAddress, clientPortUDP) == sf::Socket::Done)
+			//Sending messages back to clients
+			for (auto& client : clientsUDP)
+			{
+				if (serverUDP->send(sentPacket, serverAddress, client) == sf::Socket::Done)
 				{
-					//std::cout << "(UDP) SENT packet successfully" << std::endl;
+					//std::cout << "(UDP) SENT packet successfully to port " << client << std::endl;
 				}
 			}
 		}

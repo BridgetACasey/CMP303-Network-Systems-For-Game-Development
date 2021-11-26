@@ -2,7 +2,9 @@
 
 #pragma once
 
+#include <map>
 #include <vector>
+#include <unordered_set>
 #include <SFML/System/Clock.hpp>
 #include <SFML/Network.hpp>
 #include "window_manager.h"
@@ -37,7 +39,8 @@ private:
 	sf::SocketSelector selector;
 
 	std::vector<sf::TcpSocket*> clientsTCP;
-	std::vector<sf::UdpSocket*> clientsUDP;
+	std::unordered_set<unsigned short> clientsUDP;
+	sf::UdpSocket* serverUDP;
 
 	std::vector<ChatData> chatHistory;
 
