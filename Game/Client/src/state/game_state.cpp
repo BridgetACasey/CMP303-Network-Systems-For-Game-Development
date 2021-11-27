@@ -23,6 +23,21 @@ void GameState::setup()
 {
 	chatManager = new ChatManager(context->getInputManager());
 
+	player = new Player(context->getInputManager());
+
+	player->setPlayerID(context->getNetworkManager()->getSocketUDP()->getLocalPort());
+	player->setPosition(sf::Vector2f(575.0f, 300.0f));
+	player->setSize(sf::Vector2f(50.0f, 50.0f));
+
+	sf::Texture* playerTexture = new sf::Texture();
+
+	if (!playerTexture->loadFromFile("assets/potatolizard.png"))
+	{
+		printf("could not load texture");
+	}
+
+	player->setTexture(playerTexture);
+
 	chatBar = new GameObject();
 	chatBar->setFillColor(sf::Color(0, 0, 0, 64));
 	chatBar->setSize(sf::Vector2f(1030.0f, 30.0f));
@@ -35,10 +50,6 @@ void GameState::setup()
 	chatButton = new UIButton(context->getInputManager(), "assets/chat-active.png", "assets/chat-idle.png");
 	chatButton->setPosition(sf::Vector2f(1100.0f, 575.0f));
 	chatButton->setSize(sf::Vector2f(75.0f, 75.0f));
-
-	PlayerData playerData;
-	playerData.id = context->getNetworkManager()->getSocketUDP()->getLocalPort();
-	context->getNetworkManager()->sendDataUDP(playerData);
 }
 
 void GameState::onEnter()
@@ -123,45 +134,20 @@ void GameState::createNewPlayerInstance(int id, std::string& sprite)
 
 	if (!playerTexture->loadFromFile(sprite))
 	{
-		//printf("could not load texture");
+		printf("could not load texture");
 	}
 
 	newPlayer->setTexture(playerTexture);
 
-	if (player == nullptr)
-	{
-		player = newPlayer;
-		player->setPlayerID(context->getNetworkManager()->getSocketUDP()->getLocalPort());
-	}
-	
-	else
-	{
-		otherPlayers.push_back(newPlayer);
-	}
+	otherPlayers.push_back(newPlayer);
 }
 
 void GameState::updatePlayerPositions(float deltaTime)
 {
-	//Receive player data from the server
-	PlayerData receivePlayer;
-	context->getNetworkManager()->receiveDataUDP(receivePlayer);
-
-	if ((receivePlayer.total > (otherPlayers.size() + 1)) || player == nullptr)
+	if (playing)
 	{
-		createNewPlayerInstance(receivePlayer.id, receivePlayer.spritePath);
-	}
-
-	else if (receivePlayer.total < (otherPlayers.size() + 1))
-	{
-		//remove the player that has disconnected
-	}
-
-	for (Player* otherPlayer : otherPlayers)
-	{
-		if (otherPlayer->getPlayerID() == receivePlayer.id)
-		{
-			otherPlayer->setPosition(sf::Vector2f(receivePlayer.posX, receivePlayer.posY));
-		}
+		player->checkBounds((float)context->getWindowManager()->getWindow()->getSize().x, (float)context->getWindowManager()->getWindow()->getSize().y);
+		player->update(deltaTime);
 	}
 
 	//Send player data by UDP
@@ -174,11 +160,30 @@ void GameState::updatePlayerPositions(float deltaTime)
 	playerData.velY = player->getVelocity().y;
 
 	context->getNetworkManager()->sendDataUDP(playerData);
-	
-	if (playing)
+
+	//Receive player data from the server
+	PlayerData receivePlayer;
+	context->getNetworkManager()->receiveDataUDP(receivePlayer);
+
+	if (receivePlayer.id > 0 && receivePlayer.id != player->getPlayerID())
 	{
-		player->checkBounds((float)context->getWindowManager()->getWindow()->getSize().x, (float)context->getWindowManager()->getWindow()->getSize().y);
-		player->update(deltaTime);
+		if ((receivePlayer.total > (otherPlayers.size() + 1)))
+		{
+			createNewPlayerInstance(receivePlayer.id, receivePlayer.spritePath);
+		}
+
+		else if (receivePlayer.total < (otherPlayers.size() + 1))
+		{
+			//remove the player that has disconnected
+		}
+	}
+
+	for (Player* otherPlayer : otherPlayers)
+	{
+		if (otherPlayer->getPlayerID() == receivePlayer.id)
+		{
+			otherPlayer->setPosition(sf::Vector2f(receivePlayer.posX, receivePlayer.posY));
+		}
 	}
 }
 

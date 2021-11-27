@@ -4,8 +4,8 @@
 
 struct PlayerData
 {
-	int id;
-	int total;
+	int id = 0;
+	int total = 0;
 	float posX, posY;
 	float velX, velY;
 	std::string spritePath;

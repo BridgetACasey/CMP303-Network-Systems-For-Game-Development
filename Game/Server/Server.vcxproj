@@ -163,10 +163,12 @@
   <ItemGroup>
     <ClCompile Include="src\application.cpp" />
     <ClCompile Include="server_main.cpp" />
+    <ClCompile Include="src\connection.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\application.h" />
     <ClInclude Include="src\chat_data.h" />
+    <ClInclude Include="src\connection.h" />
     <ClInclude Include="src\player_data.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

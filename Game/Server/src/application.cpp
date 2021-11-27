@@ -59,18 +59,35 @@ void Application::run()
 
 void Application::connectClients()
 {
-	if (clientsTCP.size() < MAX_CLIENTS)
+	if (clients.size() < MAX_CLIENTS)
 	{
 		sf::TcpSocket* clientTCP = new sf::TcpSocket();
 
 		if (listener.accept(*clientTCP) == sf::Socket::Done)
 		{
-			//Create TCP sockets for new connections and add them to selector
-			clientsTCP.push_back(clientTCP);
+			sf::Packet packet;
 
-			selector.add(*clientTCP);
+			if (clientTCP->receive(packet) == sf::Socket::Done)
+			{
+				unsigned short udpPort;
 
-			std::cout << "New client has connected on " << clientTCP->getRemoteAddress().toString() << std::endl;
+				if (packet >> udpPort)
+				{
+					//Create TCP sockets for new connections and add them to selector
+					Connection* client = new Connection(clients.size(), clientTCP);
+
+					std::cout << "New client has connected on " << clientTCP->getRemoteAddress().toString() << std::endl;
+					client->setClientUDP(udpPort);
+					std::cout << "Client bound to port " << udpPort << std::endl;
+
+					std::string spritePath = "assets/potatolizard.png";
+
+					client->setSpritePath(spritePath);
+					clients.push_back(client);
+
+					selector.add(*clientTCP);
+				}
+			}
 		}
 
 		else
@@ -89,13 +106,13 @@ void Application::handleDataTCP()
 	if (selector.wait(sf::microseconds(1)))
 	{
 		//Receiving new messages from the clients
-		for (sf::TcpSocket* client : clientsTCP)
+		for (Connection* client : clients)
 		{
-			if (selector.isReady(*client))
+			if (selector.isReady(*client->getClientTCP()))
 			{
 				sf::Packet receivedPacket;
 
-				if (client->receive(receivedPacket) == sf::Socket::Done)
+				if (client->getClientTCP()->receive(receivedPacket) == sf::Socket::Done)
 				{
 					std::cout << "(TCP) RECEIVED packet successfully" << std::endl;
 
@@ -119,7 +136,7 @@ void Application::handleDataTCP()
 	}
 
 	//Sending messages back to clients
-	for (sf::TcpSocket* client : clientsTCP)
+	for (Connection* client : clients)
 	{
 		for (auto& currentMsg : currentMessages)
 		{
@@ -129,7 +146,7 @@ void Application::handleDataTCP()
 			{
 				std::cout << "(TCP) PACKED data successfully" << std::endl;
 
-				if (client->send(sentPacket) == sf::Socket::Done)
+				if (client->getClientTCP()->send(sentPacket) == sf::Socket::Done)
 				{
 					std::cout << "(TCP) SENT packet successfully" << std::endl;
 				}
@@ -154,27 +171,22 @@ void Application::handleDataUDP()
 		if (receivedPacket >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.velX >> playerData.velY >> playerData.spritePath)
 		{
 			//std::cout << "(UDP) UNPACKED data successfully - id: " << playerData.id << " pos x: " << playerData.posX << " pos y: " << playerData.posY << " vel x: " << playerData.velX << " vel y: " << playerData.velY << std::endl;
-
-			clientsUDP.insert(port);
-
-			playerData.total = clientsUDP.size();
-
-			std::string sprite = "assets/potatolizard.png";
-			playerData.spritePath = sprite;
-
-			sf::Packet sentPacket;
-
-			if (sentPacket << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.velX << playerData.velY << playerData.spritePath)
+			for (Connection* client : clients)
 			{
-				//std::cout << "(UDP) PACKED data successfully" << std::endl;
-			}
+				playerData.total = clients.size();
+				playerData.spritePath = client->getSpritePath();
 
-			//Sending messages back to clients
-			for (auto& client : clientsUDP)
-			{
-				if (serverUDP->send(sentPacket, address, client) == sf::Socket::Done)
+				sf::Packet sentPacket;
+
+				if (sentPacket << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.velX << playerData.velY << playerData.spritePath)
 				{
-					//std::cout << "(UDP) SENT packet successfully to port " << client << std::endl;
+					//std::cout << "(UDP) PACKED data successfully" << std::endl;
+
+					//Sending messages back to clients
+					if (serverUDP->send(sentPacket, address, client->getClientUDP()) == sf::Socket::Done)
+					{
+						std::cout << "(UDP) SENT packet successfully to port " << client->getClientUDP() << std::endl;
+					}
 				}
 			}
 		}

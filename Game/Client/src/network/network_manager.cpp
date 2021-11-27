@@ -36,8 +36,20 @@ void NetworkManager::requestConnection()
 	{
 		std::cout << "Failed to connect to server" << std::endl;
 	}
+	
+	else
+	{
+		socketTCP->setBlocking(false);
 
-	socketTCP->setBlocking(false);
+		sf::Packet packet;
+
+		packet << socketUDP->getLocalPort();
+
+		if (socketTCP->send(packet) == sf::Socket::Done)
+		{
+			std::cout << "Connection established on port " << socketUDP->getLocalPort() << std::endl;
+		}
+	}
 }
 
 void NetworkManager::requestDisconnection()
@@ -153,7 +165,7 @@ void NetworkManager::receiveDataUDP(PlayerData& playerData)
 		break;
 
 	case sf::Socket::NotReady:
-		std::cout << "(UDP) NOT READY to receive packet" << std::endl;
+		//std::cout << "(UDP) NOT READY to receive packet" << std::endl;
 		break;
 
 	case sf::Socket::Error:
