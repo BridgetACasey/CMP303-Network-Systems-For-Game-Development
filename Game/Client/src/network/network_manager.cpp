@@ -21,6 +21,7 @@ NetworkManager::NetworkManager()
 	else
 	{
 		std::cout << "UDP socket bound to port " << socketUDP->getLocalPort() << std::endl;
+		//socketUDP->setBlocking(false);
 	}
 }
 
@@ -52,9 +53,24 @@ void NetworkManager::sendDataTCP(ChatData& chatData)
 	{
 		std::cout << "(TCP) PACKED data successfully" << std::endl;
 
-		if (socketTCP->send(packet) == sf::Socket::Done)
+		sf::Socket::Status status = socketTCP->send(packet);
+
+		switch (status)
 		{
+		case sf::Socket::Done:
 			std::cout << "(TCP) SENT packet successfully" << std::endl;
+			break;
+
+		case sf::Socket::Partial:
+			std::cout << "(TCP) PARTIAL packet sent" << std::endl;
+			break;
+
+		case sf::Socket::Error:
+			std::cout << "(TCP) ERROR sending packet" << std::endl;
+			break;
+
+		default:
+			break;
 		}
 	}
 }
@@ -63,14 +79,32 @@ void NetworkManager::receiveDataTCP(ChatData& chatData)
 {
 	sf::Packet packet;
 
-	if (socketTCP->receive(packet) == sf::Socket::Done)
-	{
-		std::cout << "(TCP) RECEIVED packet successfully" << std::endl;
+	sf::Socket::Status status = socketTCP->receive(packet);
 
+	switch (status)
+	{
+	case sf::Socket::Done:
+		std::cout << "(TCP) RECEIVED packet successfully" << std::endl;
 		if (packet >> chatData.userName >> chatData.messageBuffer)
 		{
 			std::cout << "(TCP) UNPACKED data successfully - chat message: " << chatData.messageBuffer.toAnsiString() << std::endl;
 		}
+		break;
+
+	case sf::Socket::NotReady:
+		std::cout << "(TCP) NOT READY to receive packet" << std::endl;
+		break;
+
+	case sf::Socket::Partial:
+		std::cout << "(TCP) PARTIAL packet received" << std::endl;
+		break;
+
+	case sf::Socket::Error:
+		std::cout << "(TCP) ERROR receiving packet" << std::endl;
+		break;
+
+	default:
+		break;
 	}
 }
 
@@ -78,13 +112,24 @@ void NetworkManager::sendDataUDP(PlayerData& playerData)
 {
 	sf::Packet packet;
 
-	if (packet << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.spritePath)
+	if (packet << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.velX << playerData.velY << playerData.spritePath)
 	{
 		//std::cout << "(UDP) PACKED data successfully" << std::endl;
 
-		if (socketUDP->send(packet, serverAddress, serverPortUDP) == sf::Socket::Done)
+		sf::Socket::Status status = socketUDP->send(packet, serverAddress, serverPortUDP);
+
+		switch (status)
 		{
+		case sf::Socket::Done:
 			//std::cout << "(UDP) SENT packet successfully" << std::endl;
+			break;
+
+		case sf::Socket::Error:
+			std::cout << "(UDP) ERROR sending packet" << std::endl;
+			break;
+
+		default:
+			break;
 		}
 	}
 }
@@ -95,13 +140,27 @@ void NetworkManager::receiveDataUDP(PlayerData& playerData)
 	sf::IpAddress address;
 	unsigned short port;
 
-	if (socketUDP->receive(packet, address, port) == sf::Socket::Done)
-	{
-		//std::cout << "(UDP) RECEIVED packet from " << address.toString() << " on port " << port << std::endl;
+	sf::Socket::Status status = socketUDP->receive(packet, address, port);
 
-		if (packet >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.spritePath)
+	switch (status)
+	{
+	case sf::Socket::Done:
+		//std::cout << "(UDP) SENT packet successfully" << std::endl;
+		if (packet >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.velX >> playerData.velY >> playerData.spritePath)
 		{
-			//std::cout << "(UDP) UNPACKED data successfully - id: " << playerData.id << " pos x: " << playerData.posX << " pos y: " << playerData.posY << std::endl;
+			//std::cout << "(UDP) UNPACKED data successfully - id: " << playerData.id << " pos x: " << playerData.posX << " pos y: " << playerData.posY << " vel x: " << playerData.velX << " vel y: " << playerData.velY << std::endl;
 		}
+		break;
+
+	case sf::Socket::NotReady:
+		std::cout << "(UDP) NOT READY to receive packet" << std::endl;
+		break;
+
+	case sf::Socket::Error:
+		std::cout << "(UDP) ERROR receiving packet" << std::endl;
+		break;
+
+	default:
+		break;
 	}
 }

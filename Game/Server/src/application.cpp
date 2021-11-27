@@ -37,6 +37,11 @@ void Application::run()
 	{
 		std::cout << "Failed to bind server to port " << serverPortUDP << std::endl;
 	}
+	
+	else
+	{
+		serverUDP->setBlocking(false);
+	}
 
 	while (running)
 	{
@@ -170,9 +175,9 @@ void Application::handleDataUDP()
 
 		PlayerData playerData;
 
-		if (receivedPacket >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.spritePath)
+		if (receivedPacket >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.velX >> playerData.velY >> playerData.spritePath)
 		{
-			//std::cout << "(UDP) UNPACKED data successfully - id: " << playerData.id << " pos x: " << playerData.posX << " pos y: " << playerData.posY << std::endl;
+			//std::cout << "(UDP) UNPACKED data successfully - id: " << playerData.id << " pos x: " << playerData.posX << " pos y: " << playerData.posY << " vel x: " << playerData.velX << " vel y: " << playerData.velY << std::endl;
 
 			clientsUDP.insert(port);
 
@@ -183,7 +188,7 @@ void Application::handleDataUDP()
 
 			sf::Packet sentPacket;
 
-			if (sentPacket << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.spritePath)
+			if (sentPacket << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.velX << playerData.velY << playerData.spritePath)
 			{
 				//std::cout << "(UDP) PACKED data successfully" << std::endl;
 			}
@@ -191,7 +196,7 @@ void Application::handleDataUDP()
 			//Sending messages back to clients
 			for (auto& client : clientsUDP)
 			{
-				if (serverUDP->send(sentPacket, serverAddress, client) == sf::Socket::Done)
+				if (serverUDP->send(sentPacket, address, client) == sf::Socket::Done)
 				{
 					//std::cout << "(UDP) SENT packet successfully to port " << client << std::endl;
 				}

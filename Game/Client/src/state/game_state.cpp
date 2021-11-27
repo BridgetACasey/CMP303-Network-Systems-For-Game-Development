@@ -198,7 +198,7 @@ void GameState::updateChatLog(float deltaTime)
 			context->getInputManager()->setKeyStatus(sf::Keyboard::Key::Enter, InputStatus::NONE);
 
 			ChatData sendChat;
-			sendChat.userName = "The_Player45";
+			sendChat.userName = "P_" + std::to_string(context->getNetworkManager()->getSocketUDP()->getLocalPort());
 			sendChat.messageBuffer = chatManager->getInputText()->getString();
 			context->getNetworkManager()->sendDataTCP(sendChat);
 		}
