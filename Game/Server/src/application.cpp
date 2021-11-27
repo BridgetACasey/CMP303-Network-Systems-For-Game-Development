@@ -2,9 +2,6 @@
 
 #include <iostream>
 
-#include <SFML/Window/Event.hpp>
-#include <SFML/Graphics/Texture.hpp>
-
 #include "application.h"
 
 const int MAX_CLIENTS = 2;
@@ -83,11 +80,6 @@ void Application::connectClients()
 			delete clientTCP;	//Client cannot connect, delete TCP socket
 		}
 	}
-}
-
-void Application::disconnectClients()
-{
-	//disconnect client and resize vectors
 }
 
 void Application::handleDataTCP()
@@ -187,32 +179,4 @@ void Application::handleDataUDP()
 			}
 		}
 	}
-}
-
-sf::Vector2f Application::runPrediction(float gameTime)
-{
-	float predictedX = -1.0f;
-	float predictedY = -1.0f;
-
-	//const int msize = m_Messages.size();
-
-	//if (msize < 3)
-	//{
-	//	return sf::Vector2f(predictedX, predictedX);
-	//}
-
-	//const TankMessage& msg0 = m_Messages[msize - 1];
-	//const TankMessage& msg1 = m_Messages[msize - 2];
-	//const TankMessage& msg2 = m_Messages[msize - 3];
-
-	// FIXME: Implement prediction here!
-	// You have:
-	// - the history of position messages received, in "m_Messages"
-	//   (msg0 is the most recent, msg1 the 2nd most recent, msg2 the 3rd most recent)
-	// - the current time, in "gameTime"
-	//
-	// You need to update:
-	// - the predicted position at the current time, in "predictedX" and "predictedY"
-
-	return sf::Vector2f(predictedX, predictedY);
 }

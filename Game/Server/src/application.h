@@ -21,12 +21,9 @@ public:
 
 private:
 	void connectClients();
-	void disconnectClients();
 
 	void handleDataTCP();
 	void handleDataUDP();
-
-	sf::Vector2f runPrediction(float gameTime);
 
 	sf::TcpListener listener;
 	sf::SocketSelector selector;

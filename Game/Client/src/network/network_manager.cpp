@@ -92,7 +92,7 @@ void NetworkManager::receiveDataTCP(ChatData& chatData)
 		break;
 
 	case sf::Socket::NotReady:
-		std::cout << "(TCP) NOT READY to receive packet" << std::endl;
+		//std::cout << "(TCP) NOT READY to receive packet" << std::endl;
 		break;
 
 	case sf::Socket::Partial:
