@@ -8,7 +8,6 @@
 
 #include <SFML/Network.hpp>
 
-#include "game_object.h"
 #include "player_data.h"
 #include "chat_data.h"
 
@@ -29,8 +28,6 @@ private:
 
 	sf::Vector2f runPrediction(float gameTime);
 
-	std::vector<GameObject*> clientPlayers;
-	
 	sf::TcpListener listener;
 	sf::SocketSelector selector;
 

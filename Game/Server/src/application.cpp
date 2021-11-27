@@ -74,22 +74,6 @@ void Application::connectClients()
 			selector.add(*clientTCP);
 
 			std::cout << "New client has connected on " << clientTCP->getRemoteAddress().toString() << std::endl;
-
-			GameObject* player = new GameObject();
-
-			player->setPosition(sf::Vector2f(575.0f, 300.0f));
-			player->setSize(sf::Vector2f(50.0f, 50.0f));
-
-			sf::Texture* playerTexture = new sf::Texture();
-
-			if (!playerTexture->loadFromFile("assets/potatolizard.png"))
-			{
-				printf("could not load texture");
-			}
-
-			player->setTexture(playerTexture);
-
-			clientPlayers.push_back(player);
 		}
 
 		else

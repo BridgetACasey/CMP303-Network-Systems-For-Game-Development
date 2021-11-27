@@ -123,7 +123,7 @@ void GameState::createNewPlayerInstance(int id, std::string& sprite)
 
 	if (!playerTexture->loadFromFile(sprite))
 	{
-		printf("could not load texture");
+		//printf("could not load texture");
 	}
 
 	newPlayer->setTexture(playerTexture);
@@ -170,6 +170,8 @@ void GameState::updatePlayerPositions(float deltaTime)
 	playerData.id = player->getPlayerID();
 	playerData.posX = player->getPosition().x;
 	playerData.posY = player->getPosition().y;
+	playerData.velX = player->getVelocity().x;
+	playerData.velY = player->getVelocity().y;
 
 	context->getNetworkManager()->sendDataUDP(playerData);
 	
