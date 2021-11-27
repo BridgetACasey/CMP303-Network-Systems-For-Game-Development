@@ -2,6 +2,7 @@
 
 #include "context.h"
 #include "game_state.h"
+#include <iostream>
 
 GameState::GameState()
 {
@@ -33,7 +34,7 @@ void GameState::setup()
 
 	if (!playerTexture->loadFromFile("assets/potatolizard.png"))
 	{
-		printf("could not load texture");
+		std::cout << "could not load texture" << std::endl;
 	}
 
 	player->setTexture(playerTexture);
@@ -75,6 +76,18 @@ bool GameState::update(float deltaTime)
 
 	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
 	{
+		sf::Packet packet;
+
+		bool quit = true;
+
+		if (packet << quit)
+		{
+			if (context->getNetworkManager()->getSocketTCP()->send(packet) == sf::Socket::Done)
+			{
+				std::cout << "Requesting to quit" << std::endl;
+			}
+		}
+
 		return false;
 	}
 
@@ -122,7 +135,7 @@ void GameState::render()
 	context->getWindowManager()->endRender();
 }
 
-void GameState::createNewPlayerInstance(int id, std::string& sprite)
+void GameState::createPlayerInstance(int id, std::string& sprite)
 {
 	Player* newPlayer = new Player(context->getInputManager());
 
@@ -140,6 +153,19 @@ void GameState::createNewPlayerInstance(int id, std::string& sprite)
 	newPlayer->setTexture(playerTexture);
 
 	otherPlayers.push_back(newPlayer);
+}
+
+void GameState::removePlayerInstance(int id)
+{
+	for (int i = 0; i < otherPlayers.size(); i++)
+	{
+		if (otherPlayers.at(i)->getPlayerID() == id)
+		{
+			otherPlayers.erase(otherPlayers.begin() + i);
+		}
+	}
+
+	otherPlayers.shrink_to_fit();
 }
 
 void GameState::updatePlayerPositions(float deltaTime)
@@ -169,12 +195,12 @@ void GameState::updatePlayerPositions(float deltaTime)
 	{
 		if ((receivePlayer.total > (otherPlayers.size() + 1)))
 		{
-			createNewPlayerInstance(receivePlayer.id, receivePlayer.spritePath);
+			createPlayerInstance(receivePlayer.id, receivePlayer.spritePath);
 		}
 
 		else if (receivePlayer.total < (otherPlayers.size() + 1))
 		{
-			//remove the player that has disconnected
+			removePlayerInstance(receivePlayer.id);
 		}
 	}
 

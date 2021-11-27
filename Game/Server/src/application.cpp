@@ -54,6 +54,8 @@ void Application::run()
 		}
 
 		handleDataUDP();
+
+		disconnectClients();
 	}
 }
 
@@ -99,6 +101,24 @@ void Application::connectClients()
 	}
 }
 
+void Application::disconnectClients()
+{
+	for (int i = 0; i < clients.size(); i++)
+	{
+		if (!clients.at(i)->getConnected())
+		{
+			clients.erase(clients.begin() + i);
+		}
+	}
+
+	clients.shrink_to_fit();
+
+	for (int i = 0; i < clients.size(); i++)
+	{
+		clients.at(i)->setClientID(i);
+	}
+}
+
 void Application::handleDataTCP()
 {
 	std::vector<ChatData> currentMessages;
@@ -117,8 +137,15 @@ void Application::handleDataTCP()
 					std::cout << "(TCP) RECEIVED packet successfully" << std::endl;
 
 					ChatData chatData;
+					bool quit;
 
-					if (receivedPacket >> chatData.userName >> chatData.messageBuffer)
+					if (receivedPacket >> quit)
+					{
+						std::cout << "(TCP) CLIENT WISHES TO QUIT!" << std::endl;
+						client->setConnected(false);
+					}
+
+					else if (receivedPacket >> chatData.userName >> chatData.messageBuffer)
 					{
 						std::cout << "(TCP) UNPACKED data successfully - chat message: " << chatData.messageBuffer.toAnsiString() << std::endl;
 

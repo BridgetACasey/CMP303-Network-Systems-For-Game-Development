@@ -21,7 +21,8 @@ public:
 	void render() override;
 
 private:
-	void createNewPlayerInstance(int id, std::string& sprite);
+	void createPlayerInstance(int id, std::string& sprite);
+	void removePlayerInstance(int id);
 	void updatePlayerPositions(float deltaTime);
 	void updateChatLog(float deltaTime);
 	

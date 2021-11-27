@@ -22,6 +22,7 @@ public:
 
 private:
 	void connectClients();
+	void disconnectClients();
 
 	void handleDataTCP();
 	void handleDataUDP();

@@ -13,6 +13,9 @@ public:
 	inline void setClientID(int id) { clientID = id; }
 	inline int getClientID() const { return clientID; }
 
+	inline void setConnected(bool con) { connected = con; }
+	inline bool getConnected() const { return connected; }
+
 	inline void setSpritePath(std::string& sprite) { spritePath = sprite; }
 	inline std::string getSpritePath() const { return spritePath; }
 
@@ -23,6 +26,7 @@ public:
 
 private:
 	int clientID;
+	bool connected;
 	sf::TcpSocket* clientTCP;
 	unsigned short clientUDP;
 	std::string spritePath;
