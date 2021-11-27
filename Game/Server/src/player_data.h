@@ -4,6 +4,7 @@
 
 struct PlayerData
 {
+	int time = 0;
 	int id = 0;
 	int total = 0;
 	float posX, posY;

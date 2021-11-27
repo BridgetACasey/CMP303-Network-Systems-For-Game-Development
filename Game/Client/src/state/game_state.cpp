@@ -6,6 +6,8 @@
 
 GameState::GameState()
 {
+	elapsedTime = 0;
+	
 	player = nullptr;
 	chatBar = nullptr;
 	chatManager = nullptr;
@@ -13,6 +15,7 @@ GameState::GameState()
 	playButton = nullptr;
 
 	playing = true;
+	running = true;
 }
 
 GameState::~GameState()
@@ -70,38 +73,52 @@ bool GameState::update(float deltaTime)
 {
 	context->getInputManager()->update(deltaTime);
 
-	updatePlayerPositions(deltaTime);
-
-	updateChatLog(deltaTime);
-
 	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
 	{
-		sf::Packet packet;
+		sf::Packet sentPacket;
 
 		bool quit = true;
 
-		if (packet << quit)
+		if (sentPacket << quit)
 		{
-			if (context->getNetworkManager()->getSocketTCP()->send(packet) == sf::Socket::Done)
+			if (context->getNetworkManager()->getSocketTCP()->send(sentPacket) == sf::Socket::Done)
 			{
 				std::cout << "Requesting to quit" << std::endl;
+
+				context->getNetworkManager()->getSocketTCP()->setBlocking(true);
+
+				sf::Packet receivedPacket;
+
+				if (context->getNetworkManager()->getSocketTCP()->receive(receivedPacket) == sf::Socket::Done)
+				{
+					if (receivedPacket >> quit)
+					{
+						std::cout << "Disconnected from server, closing application..." << std::endl;
+						running = false;
+					}
+				}
 			}
 		}
-
-		return false;
 	}
 
-	if (chatButton->isClicked())
+	if (running)
 	{
-		playing = false;
+		updatePlayerPositions(deltaTime);
+
+		updateChatLog(deltaTime);
+
+		if (chatButton->isClicked())
+		{
+			playing = false;
+		}
+
+		if (playButton->isClicked())
+		{
+			playing = true;
+		}
 	}
 
-	if (playButton->isClicked())
-	{
-		playing = true;
-	}
-
-	return true;
+	return running;
 }
 
 void GameState::render()
@@ -147,7 +164,7 @@ void GameState::createPlayerInstance(int id, std::string& sprite)
 
 	if (!playerTexture->loadFromFile(sprite))
 	{
-		printf("could not load texture");
+		std::cout << "could not load texture" << std::endl;
 	}
 
 	newPlayer->setTexture(playerTexture);
@@ -179,6 +196,7 @@ void GameState::updatePlayerPositions(float deltaTime)
 	//Send player data by UDP
 	PlayerData playerData;
 
+	playerData.time = elapsedTime;
 	playerData.id = player->getPlayerID();
 	playerData.posX = player->getPosition().x;
 	playerData.posY = player->getPosition().y;
@@ -190,6 +208,15 @@ void GameState::updatePlayerPositions(float deltaTime)
 	//Receive player data from the server
 	PlayerData receivePlayer;
 	context->getNetworkManager()->receiveDataUDP(receivePlayer);
+
+	if (receivePlayer.time > (elapsedTime + 25))
+	{
+		std::cout << "TIMEOUT!" << std::endl;
+	}
+
+	elapsedTime = receivePlayer.time;
+
+	std::cout << "Time: " << elapsedTime << std::endl;
 
 	if (receivePlayer.id > 0 && receivePlayer.id != player->getPlayerID())
 	{

@@ -26,6 +26,8 @@ private:
 	void updatePlayerPositions(float deltaTime);
 	void updateChatLog(float deltaTime);
 	
+	int elapsedTime;
+
 	Player* player;
 
 	std::vector<Player*> otherPlayers;
@@ -38,4 +40,5 @@ private:
 	UIButton* playButton;
 
 	bool playing;
+	bool running;
 };

@@ -4,9 +4,9 @@
 
 #include <map>
 #include <vector>
-#include <unordered_set>
 
 #include <SFML/Network.hpp>
+#include <SFML/System/Clock.hpp>
 
 #include "connection.h"
 #include "player_data.h"
@@ -21,11 +21,17 @@ public:
 	void run();
 
 private:
+	inline int getServerTime() const { return serverClock.getElapsedTime().asMilliseconds(); }
+	
 	void connectClients();
 	void disconnectClients();
 
 	void handleDataTCP();
 	void handleDataUDP();
+
+	sf::Clock serverClock;
+
+	int elapsedTime;
 
 	sf::TcpListener listener;
 	sf::SocketSelector selector;
