@@ -77,7 +77,7 @@ bool GameState::update(float deltaTime)
 	{
 		sf::Packet sentPacket;
 
-		bool quit = true;
+		int quit = -1;
 
 		if (sentPacket << quit)
 		{
@@ -93,8 +93,11 @@ bool GameState::update(float deltaTime)
 				{
 					if (receivedPacket >> quit)
 					{
-						std::cout << "Disconnected from server, closing application..." << std::endl;
-						running = false;
+						if (quit == -2)
+						{
+							std::cout << "Disconnected from server, closing application..." << std::endl;
+							running = false;
+						}
 					}
 				}
 			}

@@ -117,23 +117,27 @@ void Application::disconnectClients()
 				{
 					std::cout << "(TCP) RECEIVED packet successfully" << std::endl;
 
-					bool quit;
+					int quit;
 
 					if (receivedPacket >> quit)
 					{
 						sf::Packet sentPacket;
 
-						std::cout << "(TCP) Client wishes to QUIT!" << std::endl;
-						clients.at(i)->setConnected(false);
-
-						if (sentPacket << clients.at(i)->getConnected())
+						if (quit == -1)
 						{
-							if (clients.at(i)->getClientTCP()->send(sentPacket) == sf::Socket::Done)
-							{
-								std::cout << "(TCP) Disconnecting client..." << std::endl;
+							std::cout << "(TCP) Client wishes to QUIT!" << std::endl;
+							clients.at(i)->setConnected(false);
+							quit = -2;
 
-								selector.remove(*clients.at(i)->getClientTCP());
-								clients.erase(clients.begin() + i);
+							if (sentPacket << quit)
+							{
+								if (clients.at(i)->getClientTCP()->send(sentPacket) == sf::Socket::Done)
+								{
+									std::cout << "(TCP) Disconnecting client..." << std::endl;
+
+									selector.remove(*clients.at(i)->getClientTCP());
+									clients.erase(clients.begin() + i);
+								}
 							}
 						}
 					}
@@ -168,7 +172,6 @@ void Application::handleDataTCP()
 					std::cout << "(TCP) RECEIVED packet successfully" << std::endl;
 
 					ChatData chatData;
-					bool quit;
 
 					if (receivedPacket >> chatData.userName >> chatData.messageBuffer)
 					{
