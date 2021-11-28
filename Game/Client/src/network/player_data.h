@@ -4,10 +4,9 @@
 
 struct PlayerData
 {
-	int time = 0;
+	float time = 0.0f;
 	int id = 0;
 	int total = 0;
 	float posX, posY;
 	float velX, velY;
-	std::string spritePath;
 };

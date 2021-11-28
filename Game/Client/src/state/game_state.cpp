@@ -6,7 +6,8 @@
 
 GameState::GameState()
 {
-	elapsedTime = 0;
+	elapsedTime = 10000;
+	lastTime = 0;
 	
 	player = nullptr;
 	chatBar = nullptr;
@@ -71,7 +72,23 @@ void GameState::onExit()
 
 bool GameState::update(float deltaTime)
 {
+	elapsedTime = (float)getClientTime();
+
 	context->getInputManager()->update(deltaTime);
+
+	updatePlayerPositions(deltaTime);
+
+	updateChatLog(deltaTime);
+
+	if (chatButton->isClicked())
+	{
+		playing = false;
+	}
+
+	if (playButton->isClicked())
+	{
+		playing = true;
+	}
 
 	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
 	{
@@ -101,23 +118,6 @@ bool GameState::update(float deltaTime)
 					}
 				}
 			}
-		}
-	}
-
-	if (running)
-	{
-		updatePlayerPositions(deltaTime);
-
-		updateChatLog(deltaTime);
-
-		if (chatButton->isClicked())
-		{
-			playing = false;
-		}
-
-		if (playButton->isClicked())
-		{
-			playing = true;
 		}
 	}
 
@@ -155,7 +155,7 @@ void GameState::render()
 	context->getWindowManager()->endRender();
 }
 
-void GameState::createPlayerInstance(int id, std::string& sprite)
+void GameState::createPlayerInstance(int id)
 {
 	Player* newPlayer = new Player(context->getInputManager());
 
@@ -165,7 +165,7 @@ void GameState::createPlayerInstance(int id, std::string& sprite)
 
 	sf::Texture* playerTexture = new sf::Texture();
 
-	if (!playerTexture->loadFromFile(sprite))
+	if (!playerTexture->loadFromFile("assets/potatolizard.png"))
 	{
 		std::cout << "could not load texture" << std::endl;
 	}
@@ -206,18 +206,15 @@ void GameState::updatePlayerPositions(float deltaTime)
 	playerData.velX = player->getVelocity().x;
 	playerData.velY = player->getVelocity().y;
 
-	context->getNetworkManager()->sendDataUDP(playerData);
-
+	if (sendUpdate(100.0f))
+	{
+		context->getNetworkManager()->sendDataUDP(playerData);
+	}
+	
 	//Receive player data from the server
 	PlayerData receivePlayer;
+
 	context->getNetworkManager()->receiveDataUDP(receivePlayer);
-
-	if (receivePlayer.time > (elapsedTime + 25))
-	{
-		std::cout << "TIMEOUT!" << std::endl;
-	}
-
-	elapsedTime = receivePlayer.time;
 
 	std::cout << "Time: " << elapsedTime << std::endl;
 
@@ -225,7 +222,7 @@ void GameState::updatePlayerPositions(float deltaTime)
 	{
 		if ((receivePlayer.total > (otherPlayers.size() + 1)))
 		{
-			createPlayerInstance(receivePlayer.id, receivePlayer.spritePath);
+			createPlayerInstance(receivePlayer.id);
 		}
 
 		else if (receivePlayer.total < (otherPlayers.size() + 1))
@@ -266,4 +263,16 @@ void GameState::updateChatLog(float deltaTime)
 			context->getNetworkManager()->sendDataTCP(sendChat);
 		}
 	}
+}
+
+bool GameState::sendUpdate(float frequency)
+{
+	if ((elapsedTime - lastTime) > frequency)
+	{
+		lastTime = elapsedTime;
+
+		return true;
+	}
+
+	return false;
 }

@@ -12,7 +12,6 @@ const int serverPortUDP = 4444;
 
 Application::Application()
 {
-	elapsedTime = 0;
 	serverUDP = new sf::UdpSocket();
 }
 
@@ -43,8 +42,6 @@ void Application::run()
 
 	while (running)
 	{
-		elapsedTime = getServerTime();
-
 		if (selector.wait(sf::microseconds(1)))
 		{
 			if (selector.isReady(listener))
@@ -83,9 +80,6 @@ void Application::connectClients()
 					client->setClientUDP(udpPort);
 					std::cout << "Client bound to port " << udpPort << std::endl;
 
-					std::string spritePath = "assets/potatolizard.png";
-
-					client->setSpritePath(spritePath);
 					clients.push_back(client);
 
 					selector.add(*clientTCP);
@@ -229,20 +223,28 @@ void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& ad
 {
 	PlayerData playerData;
 
-	if (receivedPacket >> playerData.time >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.velX >> playerData.velY >> playerData.spritePath)
+	if (receivedPacket >> playerData.time >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.velX >> playerData.velY)
 	{
-		//std::cout << "(UDP) UNPACKED data successfully - id: " << playerData.id << " pos x: " << playerData.posX << " pos y: " << playerData.posY << " vel x: " << playerData.velX << " vel y: " << playerData.velY << std::endl;
+		playerData.total = clients.size();
+
+		sf::Packet sentPacket;
+
 		for (Connection* client : clients)
 		{
-			playerData.time = elapsedTime;
-			playerData.total = clients.size();
-			playerData.spritePath = client->getSpritePath();
+			if (client->getClientUDP() == playerData.id)
+			{
+				sf::Vector2f pos = sf::Vector2f(playerData.posX, playerData.posY);
+				client->addPosition(pos);
 
-			std::cout << "Time: " << getServerTime() << std::endl;
+				if (playerData.time > (client->getElapsedTime() + 100.0f))
+				{
+					predictMovement(playerData, client);
+					client->setElapsedTime(playerData.time);
+					std::cout << "Elapsed Time (" << client->getClientUDP() << "): " << playerData.time << std::endl;
+				}
+			}
 
-			sf::Packet sentPacket;
-
-			if (sentPacket << playerData.time << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.velX << playerData.velY << playerData.spritePath)
+			if (sentPacket << playerData.time << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.velX << playerData.velY)
 			{
 				//std::cout << "(UDP) PACKED data successfully" << std::endl;
 
@@ -254,4 +256,18 @@ void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& ad
 			}
 		}
 	}
+}
+
+PlayerData& Application::predictMovement(PlayerData& player, Connection* client)
+{
+	float time = player.time - client->getElapsedTime();
+	time /= 1000.0f;
+
+	float displacementX = 0.5f * player.velX * time;
+	float displacementY = 0.5f * player.velY * time;
+
+	player.posX += displacementX;
+	player.posY += displacementY;
+
+	return player;
 }

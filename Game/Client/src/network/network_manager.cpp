@@ -21,7 +21,7 @@ NetworkManager::NetworkManager()
 	else
 	{
 		std::cout << "UDP socket bound to port " << socketUDP->getLocalPort() << std::endl;
-		//socketUDP->setBlocking(false);
+		socketUDP->setBlocking(false);
 	}
 }
 
@@ -124,7 +124,7 @@ void NetworkManager::sendDataUDP(PlayerData& playerData)
 {
 	sf::Packet packet;
 
-	if (packet << playerData.time << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.velX << playerData.velY << playerData.spritePath)
+	if (packet << playerData.time << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.velX << playerData.velY)
 	{
 		//std::cout << "(UDP) PACKED data successfully" << std::endl;
 
@@ -158,9 +158,9 @@ void NetworkManager::receiveDataUDP(PlayerData& playerData)
 	{
 	case sf::Socket::Done:
 		//std::cout << "(UDP) SENT packet successfully" << std::endl;
-		if (packet >> playerData.time >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.velX >> playerData.velY >> playerData.spritePath)
+		if (packet >> playerData.time >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.velX >> playerData.velY)
 		{
-			//std::cout << "(UDP) UNPACKED data successfully - id: " << playerData.id << " pos x: " << playerData.posX << " pos y: " << playerData.posY << " vel x: " << playerData.velX << " vel y: " << playerData.velY << std::endl;
+
 		}
 		break;
 

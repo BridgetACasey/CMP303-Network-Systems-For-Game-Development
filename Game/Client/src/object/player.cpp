@@ -7,8 +7,8 @@ Player::Player(InputManager* input)
 {
 	inputManager = input;
 
-	velocity = sf::Vector2f(0.0f, 0.0f);
 	speed = 250.0f;
+	velocity = sf::Vector2f(speed, speed);
 
 	playerID = 0;
 }
@@ -20,7 +20,16 @@ Player::~Player()
 
 const void Player::update(float deltaTime)
 {
-	move(deltaTime);
+	setPosition(getPosition().x + (velocity.x * deltaTime), getPosition().y + (velocity.y * deltaTime));
+
+	if (inputManager->getKeyStatus(sf::Keyboard::Key::W) == InputStatus::PRESSED)
+		velocity.y = -speed;
+	if (inputManager->getKeyStatus(sf::Keyboard::Key::A) == InputStatus::PRESSED)
+		velocity.x = -speed;
+	if (inputManager->getKeyStatus(sf::Keyboard::Key::S) == InputStatus::PRESSED)
+		velocity.y = speed;
+	if (inputManager->getKeyStatus(sf::Keyboard::Key::D) == InputStatus::PRESSED)
+		velocity.x = speed;
 }
 
 void Player::checkBounds(float screenWidth, float screenHeight)
@@ -36,20 +45,4 @@ void Player::checkBounds(float screenWidth, float screenHeight)
 
 	else if (getPosition().y > (screenHeight - getSize().y))
 		setPosition(getPosition().x, screenHeight - getSize().y);
-}
-
-void Player::move(float deltaTime)
-{
-	velocity = sf::Vector2f(0.0f, 0.0f);
-
-	if (inputManager->getKeyStatus(sf::Keyboard::Key::W) == InputStatus::PRESSED)
-		velocity.y = -speed;
-	if (inputManager->getKeyStatus(sf::Keyboard::Key::A) == InputStatus::PRESSED)
-		velocity.x = -speed;
-	if (inputManager->getKeyStatus(sf::Keyboard::Key::S) == InputStatus::PRESSED)
-		velocity.y = speed;
-	if (inputManager->getKeyStatus(sf::Keyboard::Key::D) == InputStatus::PRESSED)
-		velocity.x = speed;
-
-	setPosition(getPosition().x + (velocity.x * deltaTime), getPosition().y + (velocity.y * deltaTime));
 }

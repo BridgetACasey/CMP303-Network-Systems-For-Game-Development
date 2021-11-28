@@ -6,7 +6,6 @@
 #include <vector>
 
 #include <SFML/Network.hpp>
-#include <SFML/System/Clock.hpp>
 
 #include "connection.h"
 #include "player_data.h"
@@ -20,9 +19,7 @@ public:
 
 	void run();
 
-private:
-	inline int getServerTime() const { return serverClock.getElapsedTime().asMilliseconds(); }
-	
+private:	
 	void connectClients();
 	void disconnectClients(sf::Packet& receivedPacket, int id);
 
@@ -32,9 +29,7 @@ private:
 	void updateChatLog(sf::Packet& receivedPacket, ChatData& chatData);
 	void updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& address);
 
-	sf::Clock serverClock;
-
-	int elapsedTime;
+	PlayerData& predictMovement(PlayerData& player, Connection* client);
 
 	sf::TcpListener listener;
 	sf::SocketSelector selector;

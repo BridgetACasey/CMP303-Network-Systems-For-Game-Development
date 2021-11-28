@@ -22,8 +22,6 @@ public:
 	inline int getPlayerID() const { return playerID; }
 
 private:
-	void move(float deltaTime);
-
 	InputManager* inputManager;
 
 	sf::Vector2f velocity;

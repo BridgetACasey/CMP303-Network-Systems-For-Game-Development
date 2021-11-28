@@ -21,12 +21,19 @@ public:
 	void render() override;
 
 private:
-	void createPlayerInstance(int id, std::string& sprite);
+	inline int getClientTime() const { return clientClock.getElapsedTime().asMilliseconds(); }
+	
+	void createPlayerInstance(int id);
 	void removePlayerInstance(int id);
 	void updatePlayerPositions(float deltaTime);
 	void updateChatLog(float deltaTime);
 	
-	int elapsedTime;
+	bool sendUpdate(float frequency);
+
+	float elapsedTime;
+	float lastTime;
+
+	sf::Clock clientClock;
 
 	Player* player;
 
