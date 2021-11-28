@@ -24,10 +24,13 @@ private:
 	inline int getServerTime() const { return serverClock.getElapsedTime().asMilliseconds(); }
 	
 	void connectClients();
-	void disconnectClients();
+	void disconnectClients(sf::Packet& receivedPacket, int id);
 
 	void handleDataTCP();
 	void handleDataUDP();
+
+	void updateChatLog(sf::Packet& receivedPacket, ChatData& chatData);
+	void updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& address);
 
 	sf::Clock serverClock;
 

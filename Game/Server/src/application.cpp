@@ -12,6 +12,7 @@ const int serverPortUDP = 4444;
 
 Application::Application()
 {
+	elapsedTime = 0;
 	serverUDP = new sf::UdpSocket();
 }
 
@@ -50,8 +51,6 @@ void Application::run()
 			{	//Check if listener is ready to receive new connections
 				connectClients();
 			}
-
-			disconnectClients();
 
 			//Listener is not ready, check client sockets for new packets
 			handleDataTCP();
@@ -103,44 +102,28 @@ void Application::connectClients()
 	}
 }
 
-void Application::disconnectClients()
+void Application::disconnectClients(sf::Packet& receivedPacket, int id)
 {
-	sf::Packet receivedPacket;
+	int quit;
 
-	if (selector.wait(sf::microseconds(1)))
+	if (receivedPacket >> quit)
 	{
-		for (int i = 0; i < clients.size(); i++)
+		sf::Packet sentPacket;
+
+		if (quit == -1)
 		{
-			if (selector.isReady(*clients.at(i)->getClientTCP()))
+			std::cout << "(TCP) Client wishes to QUIT!" << std::endl;
+			clients.at(id)->setConnected(false);
+			quit = -2;
+
+			if (sentPacket << quit)
 			{
-				if (clients.at(i)->getClientTCP()->receive(receivedPacket) == sf::Socket::Done)
+				if (clients.at(id)->getClientTCP()->send(sentPacket) == sf::Socket::Done)
 				{
-					std::cout << "(TCP) RECEIVED packet successfully" << std::endl;
+					std::cout << "(TCP) Disconnecting client..." << std::endl;
 
-					int quit;
-
-					if (receivedPacket >> quit)
-					{
-						sf::Packet sentPacket;
-
-						if (quit == -1)
-						{
-							std::cout << "(TCP) Client wishes to QUIT!" << std::endl;
-							clients.at(i)->setConnected(false);
-							quit = -2;
-
-							if (sentPacket << quit)
-							{
-								if (clients.at(i)->getClientTCP()->send(sentPacket) == sf::Socket::Done)
-								{
-									std::cout << "(TCP) Disconnecting client..." << std::endl;
-
-									selector.remove(*clients.at(i)->getClientTCP());
-									clients.erase(clients.begin() + i);
-								}
-							}
-						}
-					}
+					selector.remove(*clients.at(id)->getClientTCP());
+					clients.erase(clients.begin() + id);
 				}
 			}
 		}
@@ -161,28 +144,27 @@ void Application::handleDataTCP()
 	if (selector.wait(sf::microseconds(1)))
 	{
 		//Receiving new messages from the clients
-		for (Connection* client : clients)
+		for (int i = 0; i < clients.size(); i++)
 		{
-			if (selector.isReady(*client->getClientTCP()))
+			if (selector.isReady(*clients.at(i)->getClientTCP()))
 			{
 				sf::Packet receivedPacket;
 
-				if (client->getClientTCP()->receive(receivedPacket) == sf::Socket::Done)
+				if (clients.at(i)->getClientTCP()->receive(receivedPacket) == sf::Socket::Done)
 				{
 					std::cout << "(TCP) RECEIVED packet successfully" << std::endl;
 
-					ChatData chatData;
-
-					if (receivedPacket >> chatData.userName >> chatData.messageBuffer)
+					if (receivedPacket.getDataSize() == sizeof(int))
 					{
-						std::cout << "(TCP) UNPACKED data successfully - chat message: " << chatData.messageBuffer.toAnsiString() << std::endl;
+						std::cout << "TCP PACKET RECEIVED - CLIENT WANTS TO QUIT!" << std::endl;
+						disconnectClients(receivedPacket, i);
+					}
 
-						if (chatHistory.size() > 100)	//Only keeping a log of the most recent 100 messages sent to the server
-						{
-							chatHistory.erase(chatHistory.begin());
-						}
-
-						chatHistory.push_back(chatData);
+					else
+					{
+						ChatData chatData;
+						std::cout << "TCP PACKET RECEIVED - CLIENT WANTS TO CHAT!" << std::endl;
+						updateChatLog(receivedPacket, chatData);
 						currentMessages.push_back(chatData);
 					}
 				}
@@ -191,19 +173,22 @@ void Application::handleDataTCP()
 	}
 
 	//Sending messages back to clients
-	for (Connection* client : clients)
+	if (currentMessages.size() > 0)
 	{
-		for (auto& currentMsg : currentMessages)
+		for (Connection* client : clients)
 		{
-			sf::Packet sentPacket;
-
-			if (sentPacket << currentMsg.userName << currentMsg.messageBuffer)
+			for (auto& currentMsg : currentMessages)
 			{
-				std::cout << "(TCP) PACKED data successfully" << std::endl;
+				sf::Packet sentPacket;
 
-				if (client->getClientTCP()->send(sentPacket) == sf::Socket::Done)
+				if (sentPacket << currentMsg.userName << currentMsg.messageBuffer)
 				{
-					std::cout << "(TCP) SENT packet successfully" << std::endl;
+					std::cout << "(TCP) PACKED data successfully" << std::endl;
+
+					if (client->getClientTCP()->send(sentPacket) == sf::Socket::Done)
+					{
+						std::cout << "(TCP) SENT packet successfully" << std::endl;
+					}
 				}
 			}
 		}
@@ -221,30 +206,50 @@ void Application::handleDataUDP()
 	{
 		//std::cout << "(UDP) RECEIVED packet from " << address.toString() << " on port " << port << std::endl;
 
-		PlayerData playerData;
+		updatePlayerData(receivedPacket, address);
+	}
+}
 
-		if (receivedPacket >> playerData.time >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.velX >> playerData.velY >> playerData.spritePath)
+void Application::updateChatLog(sf::Packet& receivedPacket, ChatData& chatData)
+{
+	if (receivedPacket >> chatData.userName >> chatData.messageBuffer)
+	{
+		std::cout << "(TCP) UNPACKED data successfully - chat message: " << chatData.messageBuffer.toAnsiString() << std::endl;
+	
+		if (chatHistory.size() > 100)	//Only keeping a log of the most recent 100 messages sent to the server
 		{
-			//std::cout << "(UDP) UNPACKED data successfully - id: " << playerData.id << " pos x: " << playerData.posX << " pos y: " << playerData.posY << " vel x: " << playerData.velX << " vel y: " << playerData.velY << std::endl;
-			for (Connection* client : clients)
+			chatHistory.erase(chatHistory.begin());
+		}
+	
+		chatHistory.push_back(chatData);
+	}
+}
+
+void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& address)
+{
+	PlayerData playerData;
+
+	if (receivedPacket >> playerData.time >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.velX >> playerData.velY >> playerData.spritePath)
+	{
+		//std::cout << "(UDP) UNPACKED data successfully - id: " << playerData.id << " pos x: " << playerData.posX << " pos y: " << playerData.posY << " vel x: " << playerData.velX << " vel y: " << playerData.velY << std::endl;
+		for (Connection* client : clients)
+		{
+			playerData.time = elapsedTime;
+			playerData.total = clients.size();
+			playerData.spritePath = client->getSpritePath();
+
+			std::cout << "Time: " << getServerTime() << std::endl;
+
+			sf::Packet sentPacket;
+
+			if (sentPacket << playerData.time << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.velX << playerData.velY << playerData.spritePath)
 			{
-				playerData.time = elapsedTime;
-				playerData.total = clients.size();
-				playerData.spritePath = client->getSpritePath();
+				//std::cout << "(UDP) PACKED data successfully" << std::endl;
 
-				std::cout << "Time: " << getServerTime() << std::endl;
-
-				sf::Packet sentPacket;
-
-				if (sentPacket << playerData.time << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.velX << playerData.velY << playerData.spritePath)
+				//Sending messages back to clients
+				if (serverUDP->send(sentPacket, address, client->getClientUDP()) == sf::Socket::Done)
 				{
-					//std::cout << "(UDP) PACKED data successfully" << std::endl;
-
-					//Sending messages back to clients
-					if (serverUDP->send(sentPacket, address, client->getClientUDP()) == sf::Socket::Done)
-					{
-						//std::cout << "(UDP) SENT packet successfully to port " << client->getClientUDP() << std::endl;
-					}
+					//std::cout << "(UDP) SENT packet successfully to port " << client->getClientUDP() << std::endl;
 				}
 			}
 		}
