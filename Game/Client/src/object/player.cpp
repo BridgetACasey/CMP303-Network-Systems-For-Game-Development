@@ -20,7 +20,8 @@ Player::~Player()
 
 const void Player::update(float deltaTime)
 {
-	setPosition(getPosition().x + (velocity.x * deltaTime), getPosition().y + (velocity.y * deltaTime));
+	velocity.x = 0.0f;
+	velocity.y = 0.0f;
 
 	if (inputManager->getKeyStatus(sf::Keyboard::Key::W) == InputStatus::PRESSED)
 		velocity.y = -speed;
@@ -30,6 +31,8 @@ const void Player::update(float deltaTime)
 		velocity.y = speed;
 	if (inputManager->getKeyStatus(sf::Keyboard::Key::D) == InputStatus::PRESSED)
 		velocity.x = speed;
+
+	setPosition(getPosition().x + (velocity.x * deltaTime), getPosition().y + (velocity.y * deltaTime));
 }
 
 void Player::checkBounds(float screenWidth, float screenHeight)

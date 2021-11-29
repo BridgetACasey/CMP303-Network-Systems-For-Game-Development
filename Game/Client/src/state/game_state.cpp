@@ -203,6 +203,8 @@ void GameState::updatePlayerPositions(float deltaTime)
 	playerData.id = player->getPlayerID();
 	playerData.posX = player->getPosition().x;
 	playerData.posY = player->getPosition().y;
+	playerData.nextPosX = player->getNextPosition().x;
+	playerData.nextPosY = player->getNextPosition().y;
 	playerData.velX = player->getVelocity().x;
 	playerData.velY = player->getVelocity().y;
 
@@ -233,9 +235,12 @@ void GameState::updatePlayerPositions(float deltaTime)
 
 	for (Player* otherPlayer : otherPlayers)
 	{
+		otherPlayer->interpolate(deltaTime);
+
 		if (otherPlayer->getPlayerID() == receivePlayer.id)
 		{
-			otherPlayer->setPosition(sf::Vector2f(receivePlayer.posX, receivePlayer.posY));
+			//otherPlayer->setPosition(sf::Vector2f(receivePlayer.posX, receivePlayer.posY));
+			otherPlayer->setNextPosition(receivePlayer.nextPosX, receivePlayer.nextPosY);
 		}
 	}
 }

@@ -223,7 +223,7 @@ void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& ad
 {
 	PlayerData playerData;
 
-	if (receivedPacket >> playerData.time >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.velX >> playerData.velY)
+	if (receivedPacket >> playerData.time >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.nextPosX >> playerData.nextPosY >> playerData.velX >> playerData.velY)
 	{
 		playerData.total = clients.size();
 
@@ -231,20 +231,12 @@ void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& ad
 
 		for (Connection* client : clients)
 		{
-			if (client->getClientUDP() == playerData.id)
-			{
-				sf::Vector2f pos = sf::Vector2f(playerData.posX, playerData.posY);
-				client->addPosition(pos);
+			//sf::Vector2f pos = sf::Vector2f(playerData.posX, playerData.posY);
+			//client->addPosition(pos);
 
-				if (playerData.time > (client->getElapsedTime() + 100.0f))
-				{
-					predictMovement(playerData, client);
-					client->setElapsedTime(playerData.time);
-					std::cout << "Elapsed Time (" << client->getClientUDP() << "): " << playerData.time << std::endl;
-				}
-			}
+			predictMovement(playerData, client);
 
-			if (sentPacket << playerData.time << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.velX << playerData.velY)
+			if (sentPacket << playerData.time << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.nextPosX << playerData.nextPosY << playerData.velX << playerData.velY)
 			{
 				//std::cout << "(UDP) PACKED data successfully" << std::endl;
 
@@ -260,14 +252,22 @@ void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& ad
 
 PlayerData& Application::predictMovement(PlayerData& player, Connection* client)
 {
+/* • Equations of motion
+	• next position = previous position + displacement
+	• displacement = speed * time (since the last message)
+	• speed = distance between last two positions / time between last two positions
+*/
 	float time = player.time - client->getElapsedTime();
 	time /= 1000.0f;
 
-	float displacementX = 0.5f * player.velX * time;
-	float displacementY = 0.5f * player.velY * time;
+	float disX = 0.5f * player.velX * time;
+	float disY = 0.5f * player.velY * time;
 
-	player.posX += displacementX;
-	player.posY += displacementY;
+	player.nextPosX = player.posX + disX;
+	player.nextPosY = player.posY + disY;
+
+	client->setElapsedTime(player.time);
+	std::cout << "Elapsed Time (" << client->getClientUDP() << "): " << player.time << std::endl;
 
 	return player;
 }
