@@ -29,8 +29,6 @@ private:
 	void updateChatLog(sf::Packet& receivedPacket, ChatData& chatData);
 	void updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& address);
 
-	PlayerData& predictMovement(PlayerData& player, Connection* client);
-
 	sf::TcpListener listener;
 	sf::SocketSelector selector;
 

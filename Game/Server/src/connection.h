@@ -3,6 +3,7 @@
 #pragma once
 
 #include <SFML/Network.hpp>
+#include <player_data.h>
 
 class Connection
 {
@@ -10,13 +11,16 @@ public:
 	Connection(int id, sf::TcpSocket* tcp);
 	~Connection();
 
-	inline void addPosition(sf::Vector2f& pos) { positions.push_back(pos); }
+	void insertPacket(PlayerData& data);
+	void predictMovement();
+
+	std::vector<PlayerData>& getPlayerPackets() { return playerPackets; }
 
 	inline void setClientID(int id) { clientID = id; }
 	inline int getClientID() const { return clientID; }
 
-	inline void setElapsedTime(float time) { elapsedTime = time; }
-	inline float getElapsedTime() const { return elapsedTime; }
+	inline void setElapsedTime(float time) { lastTime = time; }
+	inline float getLastTime() const { return lastTime; }
 
 	inline void setConnected(bool con) { connected = con; }
 	inline bool getConnected() const { return connected; }
@@ -27,9 +31,9 @@ public:
 	inline unsigned short getClientUDP() const { return clientUDP; }
 
 private:
-	std::vector<sf::Vector2f> positions;
+	std::vector<PlayerData> playerPackets;
 	int clientID;
-	float elapsedTime;
+	float lastTime;
 	bool connected;
 	sf::TcpSocket* clientTCP;
 	unsigned short clientUDP;

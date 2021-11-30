@@ -227,47 +227,43 @@ void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& ad
 	{
 		playerData.total = clients.size();
 
-		sf::Packet sentPacket;
-
 		for (Connection* client : clients)
 		{
-			//sf::Vector2f pos = sf::Vector2f(playerData.posX, playerData.posY);
-			//client->addPosition(pos);
-
-			predictMovement(playerData, client);
-
-			if (sentPacket << playerData.time << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.nextPosX << playerData.nextPosY << playerData.velX << playerData.velY)
+			if (client->getClientUDP() == playerData.id)
 			{
-				//std::cout << "(UDP) PACKED data successfully" << std::endl;
-
-				//Sending messages back to clients
-				if (serverUDP->send(sentPacket, address, client->getClientUDP()) == sf::Socket::Done)
+				for (auto& data : client->getPlayerPackets())	//Avoiding duplicate packets
 				{
-					//std::cout << "(UDP) SENT packet successfully to port " << client->getClientUDP() << std::endl;
+					if (data.time == playerData.time)
+					{
+						return;
+					}
 				}
+
+				client->insertPacket(playerData);
+				client->predictMovement();
+				playerData = client->getPlayerPackets().back();
 			}
 		}
 	}
-}
 
-PlayerData& Application::predictMovement(PlayerData& player, Connection* client)
-{
-/* • Equations of motion
-	• next position = previous position + displacement
-	• displacement = speed * time (since the last message)
-	• speed = distance between last two positions / time between last two positions
-*/
-	float time = player.time - client->getElapsedTime();
-	time /= 1000.0f;
+	sf::Packet sentPacket;
 
-	float disX = 0.5f * player.velX * time;
-	float disY = 0.5f * player.velY * time;
+	for (Connection* client : clients)
+	{
+		if (client->getClientUDP() == playerData.id)
+		{
+			continue;
+		}
 
-	player.nextPosX = player.posX + disX;
-	player.nextPosY = player.posY + disY;
+		if (sentPacket << playerData.time << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.nextPosX << playerData.nextPosY << playerData.velX << playerData.velY)
+		{
+			//std::cout << "(UDP) PACKED data successfully" << std::endl;
 
-	client->setElapsedTime(player.time);
-	std::cout << "Elapsed Time (" << client->getClientUDP() << "): " << player.time << std::endl;
-
-	return player;
+			//Sending messages back to clients
+			if (serverUDP->send(sentPacket, address, client->getClientUDP()) == sf::Socket::Done)
+			{
+				//std::cout << "(UDP) SENT packet successfully to port " << client->getClientUDP() << std::endl;
+			}
+		}
+	}
 }

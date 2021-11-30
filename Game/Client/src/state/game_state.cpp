@@ -240,6 +240,7 @@ void GameState::updatePlayerPositions(float deltaTime)
 		if (otherPlayer->getPlayerID() == receivePlayer.id)
 		{
 			//otherPlayer->setPosition(sf::Vector2f(receivePlayer.posX, receivePlayer.posY));
+			otherPlayer->setVelocity(receivePlayer.velX, receivePlayer.velY);
 			otherPlayer->setNextPosition(receivePlayer.nextPosX, receivePlayer.nextPosY);
 		}
 	}
