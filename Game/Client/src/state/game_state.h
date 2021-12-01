@@ -23,12 +23,14 @@ public:
 private:
 	inline int getClientTime() const { return clientClock.getElapsedTime().asMilliseconds(); }
 	
+	void updatePlayerCount();
 	void createPlayerInstance(int id);
 	void removePlayerInstance(int id);
 	void updatePlayerPositions(float deltaTime);
+
 	void updateChatLog(float deltaTime);
 	
-	bool sendUpdate(float frequency);
+	bool sendUpdate(float period);
 
 	float elapsedTime;
 	float lastTime;

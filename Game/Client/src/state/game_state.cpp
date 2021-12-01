@@ -4,10 +4,12 @@
 #include "game_state.h"
 #include <iostream>
 
+const float tickRate = 1000.0f / 32.0f;
+
 GameState::GameState()
 {
-	elapsedTime = 10000;
-	lastTime = 0;
+	elapsedTime = 10000.0f;
+	lastTime = 0.0f;
 	
 	player = nullptr;
 	chatBar = nullptr;
@@ -75,6 +77,8 @@ bool GameState::update(float deltaTime)
 	elapsedTime = (float)getClientTime();
 
 	context->getInputManager()->update(deltaTime);
+
+	updatePlayerCount();
 
 	updatePlayerPositions(deltaTime);
 
@@ -155,6 +159,33 @@ void GameState::render()
 	context->getWindowManager()->endRender();
 }
 
+void GameState::updatePlayerCount()
+{
+	sf::Packet updatePacket;
+
+	if (context->getNetworkManager()->getSocketTCP()->receive(updatePacket) == sf::Socket::Done)
+	{
+		int totalPlayers;
+		int clientPort;
+
+		if (updatePacket >> totalPlayers >> clientPort)
+		{
+			if (clientPort > 0 && clientPort != player->getPlayerID())
+			{
+				if ((totalPlayers > (otherPlayers.size() + 1)))
+				{
+					createPlayerInstance(clientPort);
+				}
+
+				else if (totalPlayers < (otherPlayers.size() + 1))
+				{
+					removePlayerInstance(clientPort);
+				}
+			}
+		}
+	}
+}
+
 void GameState::createPlayerInstance(int id)
 {
 	Player* newPlayer = new Player(context->getInputManager());
@@ -208,7 +239,7 @@ void GameState::updatePlayerPositions(float deltaTime)
 	playerData.velX = player->getVelocity().x;
 	playerData.velY = player->getVelocity().y;
 
-	if (sendUpdate(100.0f))
+	if (sendUpdate(tickRate))
 	{
 		context->getNetworkManager()->sendDataUDP(playerData);
 	}
@@ -218,28 +249,12 @@ void GameState::updatePlayerPositions(float deltaTime)
 
 	context->getNetworkManager()->receiveDataUDP(receivePlayer);
 
-	std::cout << "Time: " << elapsedTime << std::endl;
-
-	if (receivePlayer.id > 0 && receivePlayer.id != player->getPlayerID())
-	{
-		if ((receivePlayer.total > (otherPlayers.size() + 1)))
-		{
-			createPlayerInstance(receivePlayer.id);
-		}
-
-		else if (receivePlayer.total < (otherPlayers.size() + 1))
-		{
-			removePlayerInstance(receivePlayer.id);
-		}
-	}
-
 	for (Player* otherPlayer : otherPlayers)
 	{
 		otherPlayer->interpolate(deltaTime);
 
 		if (otherPlayer->getPlayerID() == receivePlayer.id)
 		{
-			//otherPlayer->setPosition(sf::Vector2f(receivePlayer.posX, receivePlayer.posY));
 			otherPlayer->setVelocity(receivePlayer.velX, receivePlayer.velY);
 			otherPlayer->setNextPosition(receivePlayer.nextPosX, receivePlayer.nextPosY);
 		}
@@ -271,9 +286,9 @@ void GameState::updateChatLog(float deltaTime)
 	}
 }
 
-bool GameState::sendUpdate(float frequency)
+bool GameState::sendUpdate(float period)
 {
-	if ((elapsedTime - lastTime) > frequency)
+	if ((elapsedTime - lastTime) >= period)
 	{
 		lastTime = elapsedTime;
 

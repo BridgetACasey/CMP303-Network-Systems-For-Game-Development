@@ -124,7 +124,7 @@ void NetworkManager::sendDataUDP(PlayerData& playerData)
 {
 	sf::Packet packet;
 
-	if (packet << playerData.time << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.nextPosX << playerData.nextPosY << playerData.velX << playerData.velY)
+	if (packet << playerData.time << playerData.id << playerData.posX << playerData.posY << playerData.nextPosX << playerData.nextPosY << playerData.velX << playerData.velY)
 	{
 		//std::cout << "(UDP) PACKED data successfully" << std::endl;
 
@@ -158,7 +158,7 @@ void NetworkManager::receiveDataUDP(PlayerData& playerData)
 	{
 	case sf::Socket::Done:
 		//std::cout << "(UDP) SENT packet successfully" << std::endl;
-		if (packet >> playerData.time >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.nextPosX >> playerData.nextPosY >> playerData.velX >> playerData.velY)
+		if (packet >> playerData.time >> playerData.id >> playerData.posX >> playerData.posY >> playerData.nextPosX >> playerData.nextPosY >> playerData.velX >> playerData.velY)
 		{
 
 		}

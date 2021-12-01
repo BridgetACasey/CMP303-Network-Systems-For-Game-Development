@@ -83,6 +83,28 @@ void Application::connectClients()
 					clients.push_back(client);
 
 					selector.add(*clientTCP);
+
+					for (int i = 0; i < clients.size(); i++)
+					{
+						sf::Packet updatePacket;
+
+						int clientSize = clients.size();
+						int clientPort = (int)clients.at(i)->getClientUDP();
+
+						if (updatePacket << clientSize << clientPort)
+						{
+							for (Connection* client : clients)
+							{
+								if (client->getClientUDP() != clientPort)
+								{
+									if (client->getClientTCP()->send(updatePacket) == sf::Socket::Done)
+									{
+										std::cout << "(TCP) Informing client " << client->getClientUDP() << " of connection at " << clientPort << std::endl;
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 		}
@@ -99,6 +121,8 @@ void Application::connectClients()
 void Application::disconnectClients(sf::Packet& receivedPacket, int id)
 {
 	int quit;
+	int clientSize = clients.size() - 1;
+	int clientPort = clients.at(id)->getClientUDP();
 
 	if (receivedPacket >> quit)
 	{
@@ -107,7 +131,7 @@ void Application::disconnectClients(sf::Packet& receivedPacket, int id)
 		if (quit == -1)
 		{
 			std::cout << "(TCP) Client wishes to QUIT!" << std::endl;
-			clients.at(id)->setConnected(false);
+			
 			quit = -2;
 
 			if (sentPacket << quit)
@@ -128,6 +152,19 @@ void Application::disconnectClients(sf::Packet& receivedPacket, int id)
 	for (int i = 0; i < clients.size(); i++)
 	{
 		clients.at(i)->setClientID(i);
+	}
+
+	sf::Packet updatePacket;
+
+	if (updatePacket << clientSize << clientPort)
+	{
+		for (Connection* client : clients)
+		{
+			if (client->getClientTCP()->send(updatePacket) == sf::Socket::Done)
+			{
+				std::cout << "(TCP) Informing other clients of disconnection at " << clientPort << std::endl;
+			}
+		}
 	}
 }
 
@@ -223,10 +260,8 @@ void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& ad
 {
 	PlayerData playerData;
 
-	if (receivedPacket >> playerData.time >> playerData.id >> playerData.total >> playerData.posX >> playerData.posY >> playerData.nextPosX >> playerData.nextPosY >> playerData.velX >> playerData.velY)
+	if (receivedPacket >> playerData.time >> playerData.id >> playerData.posX >> playerData.posY >> playerData.nextPosX >> playerData.nextPosY >> playerData.velX >> playerData.velY)
 	{
-		playerData.total = clients.size();
-
 		for (Connection* client : clients)
 		{
 			if (client->getClientUDP() == playerData.id)
@@ -255,7 +290,7 @@ void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& ad
 			continue;
 		}
 
-		if (sentPacket << playerData.time << playerData.id << playerData.total << playerData.posX << playerData.posY << playerData.nextPosX << playerData.nextPosY << playerData.velX << playerData.velY)
+		if (sentPacket << playerData.time << playerData.id << playerData.posX << playerData.posY << playerData.nextPosX << playerData.nextPosY << playerData.velX << playerData.velY)
 		{
 			//std::cout << "(UDP) PACKED data successfully" << std::endl;
 

@@ -22,9 +22,6 @@ public:
 	inline void setElapsedTime(float time) { lastTime = time; }
 	inline float getLastTime() const { return lastTime; }
 
-	inline void setConnected(bool con) { connected = con; }
-	inline bool getConnected() const { return connected; }
-
 	inline sf::TcpSocket* getClientTCP() const { return clientTCP; }
 
 	inline void setClientUDP(unsigned short udp) { clientUDP = udp; }
@@ -34,7 +31,6 @@ private:
 	std::vector<PlayerData> playerPackets;
 	int clientID;
 	float lastTime;
-	bool connected;
 	sf::TcpSocket* clientTCP;
 	unsigned short clientUDP;
 };

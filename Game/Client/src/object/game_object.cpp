@@ -32,7 +32,6 @@ const void GameObject::interpolate(float deltaTime)
 	float posX = lerp(getPosition().x, nextPosition.x, 0.05f);
 	float posY = lerp(getPosition().y, nextPosition.y, 0.05f);
 
-	//setPosition(posX + (velocity.x * deltaTime), posY + (velocity.y * deltaTime));
 	setPosition(posX, posY);
 }
 

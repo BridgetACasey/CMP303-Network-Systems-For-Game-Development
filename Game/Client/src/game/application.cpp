@@ -50,11 +50,13 @@ void Application::run()
 
 			if (event.type == sf::Event::KeyPressed)
 			{
+				if(event.key.code > -1)
 				context->getInputManager()->setKeyStatus(event.key.code, InputStatus::PRESSED);
 			}
 
 			if (event.type == sf::Event::KeyReleased)
 			{
+				if (event.key.code > -1)
 				context->getInputManager()->setKeyStatus(event.key.code, InputStatus::RELEASED);
 			}
 

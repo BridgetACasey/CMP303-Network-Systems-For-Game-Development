@@ -20,8 +20,8 @@ Player::~Player()
 
 const void Player::update(float deltaTime)
 {
-	//velocity.x = 0.0f;
-	//velocity.y = 0.0f;
+	velocity.x = 0.0f;
+	velocity.y = 0.0f;
 
 	if (inputManager->getKeyStatus(sf::Keyboard::Key::W) == InputStatus::PRESSED)
 		velocity.y = -speed;
