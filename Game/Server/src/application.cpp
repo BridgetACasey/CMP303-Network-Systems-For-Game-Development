@@ -4,7 +4,7 @@
 
 #include "application.h"
 
-const int MAX_CLIENTS = 3;
+const int MAX_CLIENTS = 4;
 
 const sf::IpAddress serverAddress = sf::IpAddress::getLocalAddress();
 const int serverPortTCP = 5555;

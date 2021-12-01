@@ -24,6 +24,7 @@ private:
 	inline int getClientTime() const { return clientClock.getElapsedTime().asMilliseconds(); }
 	
 	void updateGameState(float deltaTime);
+	void checkQuit();
 	void updatePlayerCount(sf::Packet& receivedPacket);
 	void createPlayerInstance(int id);
 	void removePlayerInstance(int id);
@@ -51,4 +52,6 @@ private:
 
 	bool playing;
 	bool running;
+
+	float tickRate;
 };

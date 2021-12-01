@@ -4,10 +4,10 @@
 #include "game_state.h"
 #include <iostream>
 
-const float tickRate = 1000.0f / 32.0f;
-
 GameState::GameState()
 {
+	tickRate = 1000.0f / 64.0f;
+	
 	elapsedTime = 10000.0f;
 	lastTime = 0.0f;
 	
@@ -107,36 +107,7 @@ bool GameState::update(float deltaTime)
 		playing = true;
 	}
 
-	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
-	{
-		sf::Packet sentPacket;
-
-		int quit = -1;
-
-		if (sentPacket << quit)
-		{
-			if (context->getNetworkManager()->getSocketTCP()->send(sentPacket) == sf::Socket::Done)
-			{
-				std::cout << "Requesting to quit" << std::endl;
-
-				context->getNetworkManager()->getSocketTCP()->setBlocking(true);
-
-				sf::Packet receivedPacket;
-
-				if (context->getNetworkManager()->getSocketTCP()->receive(receivedPacket) == sf::Socket::Done)
-				{
-					if (receivedPacket >> quit)
-					{
-						if (quit == -2)
-						{
-							std::cout << "Disconnected from server, closing application..." << std::endl;
-							running = false;
-						}
-					}
-				}
-			}
-		}
-	}
+	checkQuit();
 
 	return running;
 }
@@ -190,6 +161,40 @@ void GameState::updateGameState(float deltaTime)
 	}
 }
 
+void GameState::checkQuit()
+{
+	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
+	{
+		sf::Packet sentPacket;
+
+		int quit = -1;
+
+		if (sentPacket << quit)
+		{
+			if (context->getNetworkManager()->getSocketTCP()->send(sentPacket) == sf::Socket::Done)
+			{
+				std::cout << "Requesting to quit" << std::endl;
+
+				context->getNetworkManager()->getSocketTCP()->setBlocking(true);
+
+				sf::Packet receivedPacket;
+
+				if (context->getNetworkManager()->getSocketTCP()->receive(receivedPacket) == sf::Socket::Done)
+				{
+					if (receivedPacket >> quit)
+					{
+						if (quit == -2)
+						{
+							std::cout << "Disconnected from server, closing application..." << std::endl;
+							running = false;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 void GameState::updatePlayerCount(sf::Packet& receivedPacket)
 {
 	int clientFlag;
@@ -208,6 +213,8 @@ void GameState::updatePlayerCount(sf::Packet& receivedPacket)
 			{
 				removePlayerInstance(clientPort);
 			}
+
+			tickRate = 1000.0f / (64.0f / (1 + otherPlayers.size()));
 		}
 	}
 }
