@@ -4,7 +4,7 @@
 
 #include "application.h"
 
-const int MAX_CLIENTS = 2;
+const int MAX_CLIENTS = 3;
 
 const sf::IpAddress serverAddress = sf::IpAddress::getLocalAddress();
 const int serverPortTCP = 5555;
@@ -84,24 +84,36 @@ void Application::connectClients()
 
 					selector.add(*clientTCP);
 
-					for (int i = 0; i < clients.size(); i++)
+					int clientFlag = -1;
+					int clientPort = 0;
+
+					//Inform newly connected client of other clients on server
+					for (Connection* c : clients)
 					{
-						sf::Packet updatePacket;
+						sf::Packet updateNew;
 
-						int clientSize = clients.size();
-						int clientPort = (int)clients.at(i)->getClientUDP();
+						clientPort = (int)c->getClientUDP();
 
-						if (updatePacket << clientSize << clientPort)
+						if (updateNew << clientFlag << clientPort)
 						{
-							for (Connection* client : clients)
+							if (client->getClientTCP()->send(updateNew) == sf::Socket::Done)
 							{
-								if (client->getClientUDP() != clientPort)
-								{
-									if (client->getClientTCP()->send(updatePacket) == sf::Socket::Done)
-									{
-										std::cout << "(TCP) Informing client " << client->getClientUDP() << " of connection at " << clientPort << std::endl;
-									}
-								}
+								std::cout << "(TCP) Informing client " << client->getClientUDP() << " of connection at " << clientPort << std::endl;
+							}
+						}
+					}
+
+					//Inform other clients on the server of the newly connected client
+					sf::Packet updateOther;
+					clientPort = (int)udpPort;
+
+					if (updateOther << clientFlag << clientPort)
+					{
+						for (Connection* cn : clients)
+						{
+							if (cn->getClientTCP()->send(updateOther) == sf::Socket::Done)
+							{
+								std::cout << "(TCP) Informing client " << cn->getClientUDP() << " of connection at " << clientPort << std::endl;
 							}
 						}
 					}
@@ -121,7 +133,7 @@ void Application::connectClients()
 void Application::disconnectClients(sf::Packet& receivedPacket, int id)
 {
 	int quit;
-	int clientSize = clients.size() - 1;
+	int clientFlag = -2;
 	int clientPort = clients.at(id)->getClientUDP();
 
 	if (receivedPacket >> quit)
@@ -156,13 +168,13 @@ void Application::disconnectClients(sf::Packet& receivedPacket, int id)
 
 	sf::Packet updatePacket;
 
-	if (updatePacket << clientSize << clientPort)
+	if (updatePacket << clientFlag << clientPort)
 	{
 		for (Connection* client : clients)
 		{
 			if (client->getClientTCP()->send(updatePacket) == sf::Socket::Done)
 			{
-				std::cout << "(TCP) Informing other clients of disconnection at " << clientPort << std::endl;
+				std::cout << "(TCP) Informing client " << client->getClientUDP() << " of disconnection at " << clientPort << std::endl;
 			}
 		}
 	}

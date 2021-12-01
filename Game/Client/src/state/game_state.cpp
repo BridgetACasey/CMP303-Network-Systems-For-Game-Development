@@ -78,11 +78,24 @@ bool GameState::update(float deltaTime)
 
 	context->getInputManager()->update(deltaTime);
 
-	updatePlayerCount();
+	updateGameState(deltaTime);
+
+	if (!playing)
+	{
+		chatManager->updateMessageStream(deltaTime);
+
+		if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Enter) == InputStatus::PRESSED)
+		{
+			context->getInputManager()->setKeyStatus(sf::Keyboard::Key::Enter, InputStatus::NONE);
+
+			ChatData sendChat;
+			sendChat.userName = "P_" + std::to_string(context->getNetworkManager()->getSocketUDP()->getLocalPort());
+			sendChat.messageBuffer = chatManager->getInputText()->getString();
+			context->getNetworkManager()->sendDataTCP(sendChat);
+		}
+	}
 
 	updatePlayerPositions(deltaTime);
-
-	updateChatLog(deltaTime);
 
 	if (chatButton->isClicked())
 	{
@@ -159,28 +172,41 @@ void GameState::render()
 	context->getWindowManager()->endRender();
 }
 
-void GameState::updatePlayerCount()
+void GameState::updateGameState(float deltaTime)
 {
 	sf::Packet updatePacket;
 
 	if (context->getNetworkManager()->getSocketTCP()->receive(updatePacket) == sf::Socket::Done)
 	{
-		int totalPlayers;
-		int clientPort;
-
-		if (updatePacket >> totalPlayers >> clientPort)
+		if (updatePacket.getDataSize() == (sizeof(int) * 2))
 		{
-			if (clientPort > 0 && clientPort != player->getPlayerID())
-			{
-				if ((totalPlayers > (otherPlayers.size() + 1)))
-				{
-					createPlayerInstance(clientPort);
-				}
+			updatePlayerCount(updatePacket);
+		}
 
-				else if (totalPlayers < (otherPlayers.size() + 1))
-				{
-					removePlayerInstance(clientPort);
-				}
+		else
+		{
+			updateChatLog(updatePacket, deltaTime);
+		}
+	}
+}
+
+void GameState::updatePlayerCount(sf::Packet& receivedPacket)
+{
+	int clientFlag;
+	int clientPort;
+
+	if (receivedPacket >> clientFlag >> clientPort)
+	{
+		if (clientPort != player->getPlayerID())
+		{
+			if (clientFlag == -1)
+			{
+				createPlayerInstance(clientPort);
+			}
+
+			else if (clientFlag == -2)
+			{
+				removePlayerInstance(clientPort);
 			}
 		}
 	}
@@ -188,6 +214,14 @@ void GameState::updatePlayerCount()
 
 void GameState::createPlayerInstance(int id)
 {
+	for (Player* other : otherPlayers)
+	{
+		if (other->getPlayerID() == id)
+		{
+			return;
+		}
+	}
+	
 	Player* newPlayer = new Player(context->getInputManager());
 
 	newPlayer->setPlayerID(id);
@@ -261,27 +295,16 @@ void GameState::updatePlayerPositions(float deltaTime)
 	}
 }
 
-void GameState::updateChatLog(float deltaTime)
+void GameState::updateChatLog(sf::Packet& receivedPacket, float deltaTime)
 {
 	ChatData receiveChat;
-	context->getNetworkManager()->receiveDataTCP(receiveChat);
-	if (receiveChat.messageBuffer.getSize() > 0)
+	//context->getNetworkManager()->receiveDataTCP(receiveChat);
+	if (receivedPacket >> receiveChat.userName >> receiveChat.messageBuffer)
 	{
-		chatManager->addNewMessage(receiveChat.userName, receiveChat.messageBuffer);
-	}
-
-	if (!playing)
-	{
-		chatManager->updateMessageStream(deltaTime);
-
-		if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Enter) == InputStatus::PRESSED)
+		std::cout << "(TCP) UNPACKED data successfully - chat message: " << receiveChat.messageBuffer.toAnsiString() << std::endl;
+		if (receiveChat.messageBuffer.getSize() > 0)
 		{
-			context->getInputManager()->setKeyStatus(sf::Keyboard::Key::Enter, InputStatus::NONE);
-
-			ChatData sendChat;
-			sendChat.userName = "P_" + std::to_string(context->getNetworkManager()->getSocketUDP()->getLocalPort());
-			sendChat.messageBuffer = chatManager->getInputText()->getString();
-			context->getNetworkManager()->sendDataTCP(sendChat);
+			chatManager->addNewMessage(receiveChat.userName, receiveChat.messageBuffer);
 		}
 	}
 }

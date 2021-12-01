@@ -23,12 +23,13 @@ public:
 private:
 	inline int getClientTime() const { return clientClock.getElapsedTime().asMilliseconds(); }
 	
-	void updatePlayerCount();
+	void updateGameState(float deltaTime);
+	void updatePlayerCount(sf::Packet& receivedPacket);
 	void createPlayerInstance(int id);
 	void removePlayerInstance(int id);
 	void updatePlayerPositions(float deltaTime);
 
-	void updateChatLog(float deltaTime);
+	void updateChatLog(sf::Packet& receivedPacket, float deltaTime);
 	
 	bool sendUpdate(float period);
 
