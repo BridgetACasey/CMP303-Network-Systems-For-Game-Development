@@ -13,7 +13,6 @@ struct reorder
 Connection::Connection(int id, sf::TcpSocket* tcp)
 {
 	clientID = id;
-	lastTime = 0.0f;
 	clientTCP = tcp;
 	clientUDP = 0;
 }

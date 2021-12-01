@@ -38,7 +38,7 @@ void GameState::setup()
 
 	sf::Texture* playerTexture = new sf::Texture();
 
-	if (!playerTexture->loadFromFile("assets/potatolizard.png"))
+	if (!playerTexture->loadFromFile("assets/player-sprite.png"))
 	{
 		std::cout << "could not load texture" << std::endl;
 	}
@@ -237,7 +237,7 @@ void GameState::createPlayerInstance(int id)
 
 	sf::Texture* playerTexture = new sf::Texture();
 
-	if (!playerTexture->loadFromFile("assets/potatolizard.png"))
+	if (!playerTexture->loadFromFile("assets/player-sprite.png"))
 	{
 		std::cout << "could not load texture" << std::endl;
 	}
