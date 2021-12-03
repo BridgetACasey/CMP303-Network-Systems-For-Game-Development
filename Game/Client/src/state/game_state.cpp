@@ -158,6 +158,85 @@ void GameState::render()
 	context->getWindowManager()->endRender();
 }
 
+void GameState::updatePlayerPositions(float deltaTime)
+{
+	if (playing)
+	{
+		player->checkBounds((float)context->getWindowManager()->getWindow()->getSize().x, (float)context->getWindowManager()->getWindow()->getSize().y);
+		player->update(deltaTime);
+	}
+
+	//Send player data by UDP
+	PlayerData playerData;
+
+	playerData.time = elapsedTime;
+	playerData.id = player->getPlayerID();
+	playerData.posX = player->getPosition().x;
+	playerData.posY = player->getPosition().y;
+	playerData.nextPosX = player->getNextPosition().x;
+	playerData.nextPosY = player->getNextPosition().y;
+	playerData.velX = player->getVelocity().x;
+	playerData.velY = player->getVelocity().y;
+
+	if (sendUpdate(tickRate))
+	{
+		context->getNetworkManager()->sendDataUDP(playerData);
+	}
+
+	//Receive player data from the server
+	PlayerData receivePlayer;
+
+	if (context->getNetworkManager()->receiveDataUDP(receivePlayer))
+	{
+		if (player->getPlayerID() == receivePlayer.id)
+		{
+			latency = (elapsedTime - receivePlayer.time);
+		}
+	}
+
+	for (Player* otherPlayer : otherPlayers)
+	{
+		otherPlayer->interpolate(deltaTime);
+
+		if (otherPlayer->getPlayerID() == receivePlayer.id)
+		{
+			otherPlayer->setVelocity(receivePlayer.velX, receivePlayer.velY);
+			otherPlayer->setNextPosition(receivePlayer.nextPosX, receivePlayer.nextPosY);
+		}
+	}
+}
+
+void GameState::updateChatLog(sf::Packet& receivedPacket, float deltaTime)
+{
+	ChatData receiveChat;
+
+	if (receivedPacket >> receiveChat.userName >> receiveChat.messageBuffer)
+	{
+		if (!context->getNetworkManager()->validateData(receiveChat))
+		{
+			return;
+		}
+
+		std::cout << "(TCP) UNPACKED data successfully - chat message: " << receiveChat.messageBuffer.toAnsiString() << std::endl;
+		if (receiveChat.messageBuffer.getSize() > 0)
+		{
+			chatManager->addNewMessage(receiveChat.userName, receiveChat.messageBuffer);
+		}
+	}
+}
+
+bool GameState::sendUpdate(float period)
+{
+	if ((elapsedTime - lastTime) >= period)
+	{
+		lastTime = elapsedTime;
+
+		return true;
+	}
+
+	return false;
+}
+
 void GameState::updateGameState(float deltaTime)
 {
 	sf::Packet updatePacket;
@@ -273,117 +352,4 @@ void GameState::removePlayerInstance(int id)
 	}
 
 	otherPlayers.shrink_to_fit();
-}
-
-void GameState::updatePlayerPositions(float deltaTime)
-{
-	if (playing)
-	{
-		player->checkBounds((float)context->getWindowManager()->getWindow()->getSize().x, (float)context->getWindowManager()->getWindow()->getSize().y);
-		player->update(deltaTime);
-	}
-
-	//Send player data by UDP
-	PlayerData playerData;
-
-	playerData.time = elapsedTime;
-	playerData.id = player->getPlayerID();
-	playerData.posX = player->getPosition().x;
-	playerData.posY = player->getPosition().y;
-	playerData.nextPosX = player->getNextPosition().x;
-	playerData.nextPosY = player->getNextPosition().y;
-	playerData.velX = player->getVelocity().x;
-	playerData.velY = player->getVelocity().y;
-
-	if (sendUpdate(tickRate))
-	{
-		context->getNetworkManager()->sendDataUDP(playerData);
-	}
-	
-	//Receive player data from the server
-	PlayerData receivePlayer;
-
-	context->getNetworkManager()->receiveDataUDP(receivePlayer);
-
-	for (Player* otherPlayer : otherPlayers)
-	{
-		otherPlayer->interpolate(deltaTime);
-
-		if (validateData(receivePlayer))
-		{
-			if (otherPlayer->getPlayerID() == receivePlayer.id)
-			{
-				otherPlayer->setVelocity(receivePlayer.velX, receivePlayer.velY);
-				otherPlayer->setNextPosition(receivePlayer.nextPosX, receivePlayer.nextPosY);
-			}
-		}
-	}
-
-	if (player->getPlayerID() == receivePlayer.id)
-	{
-		latency = (elapsedTime - receivePlayer.time);
-	}
-}
-
-void GameState::updateChatLog(sf::Packet& receivedPacket, float deltaTime)
-{
-	ChatData receiveChat;
-
-	if (receivedPacket >> receiveChat.userName >> receiveChat.messageBuffer)
-	{
-		if (!validateData(receiveChat))
-		{
-			return;
-		}
-
-		std::cout << "(TCP) UNPACKED data successfully - chat message: " << receiveChat.messageBuffer.toAnsiString() << std::endl;
-		if (receiveChat.messageBuffer.getSize() > 0)
-		{
-			chatManager->addNewMessage(receiveChat.userName, receiveChat.messageBuffer);
-		}
-	}
-}
-
-bool GameState::sendUpdate(float period)
-{
-	if ((elapsedTime - lastTime) >= period)
-	{
-		lastTime = elapsedTime;
-
-		return true;
-	}
-
-	return false;
-}
-
-bool GameState::validateData(ChatData& chatData)
-{
-	if (chatData.userName.getSize() > 16)
-		return false;
-	if (chatData.messageBuffer.getSize() > 48)
-		return false;
-
-	return true;
-}
-
-bool GameState::validateData(PlayerData& playerData)
-{
-	if (playerData.id < 0)
-		return false;
-	if (playerData.time < 0.0f)
-		return false;
-	if (playerData.posX < -5.0f || playerData.posX > 1200.0f)
-		return false;
-	if (playerData.posY < -5.0f || playerData.posY > 750.0f)
-		return false;
-	if (playerData.nextPosX < -5.0f || playerData.nextPosX > 1200.0f)
-		return false;
-	if (playerData.nextPosY < -5.0f || playerData.nextPosY > 750.0f)
-		return false;
-	if (playerData.velX < -300.0f || playerData.velX > 300.0f)
-		return false;
-	if (playerData.velY < -300.0f || playerData.velY > 300.0f)
-		return false;
-
-	return true;
 }

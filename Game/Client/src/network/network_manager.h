@@ -16,11 +16,14 @@ public:
 	void requestConnection();
 	void requestDisconnection();
 
-	void sendDataTCP(ChatData& chatData);
-	void receiveDataTCP(ChatData& chatData);
+	bool sendDataTCP(ChatData& chatData);
+	bool receiveDataTCP(ChatData& chatData);
 
-	void sendDataUDP(PlayerData& playerData);
-	void receiveDataUDP(PlayerData& playerData);
+	bool sendDataUDP(PlayerData& playerData);
+	bool receiveDataUDP(PlayerData& playerData);
+
+	bool validateData(ChatData& chatData);
+	bool validateData(PlayerData& playerData);
 
 	inline sf::TcpSocket* getSocketTCP() const { return socketTCP; }
 	inline sf::UdpSocket* getSocketUDP() const { return socketUDP; }
@@ -28,4 +31,7 @@ public:
 private:
 	sf::TcpSocket* socketTCP;
 	sf::UdpSocket* socketUDP;
+
+	ChatData pendingChatData;
+	PlayerData pendingPlayerData;
 };

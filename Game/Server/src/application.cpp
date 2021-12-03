@@ -199,7 +199,6 @@ void Application::handleDataTCP()
 
 					if (receivedPacket.getDataSize() == sizeof(int))
 					{
-						std::cout << "TCP PACKET RECEIVED - CLIENT WANTS TO QUIT!" << std::endl;
 						disconnectClients(receivedPacket, i);
 					}
 
@@ -207,7 +206,6 @@ void Application::handleDataTCP()
 					{
 						ChatData chatData;
 						chatData.userName = "NULL";
-						std::cout << "TCP PACKET RECEIVED - CLIENT WANTS TO CHAT!" << std::endl;
 						updateChatLog(receivedPacket, chatData);
 
 						if(chatData.userName != "NULL")

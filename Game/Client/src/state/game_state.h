@@ -34,9 +34,6 @@ private:
 	
 	bool sendUpdate(float period);
 
-	bool validateData(ChatData& chatData);
-	bool validateData(PlayerData& playerData);
-
 	float elapsedTime;
 	float lastTime;
 
