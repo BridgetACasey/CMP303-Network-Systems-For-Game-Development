@@ -34,6 +34,9 @@ private:
 	
 	bool sendUpdate(float period);
 
+	bool validateData(ChatData& chatData);
+	bool validateData(PlayerData& playerData);
+
 	float elapsedTime;
 	float lastTime;
 
@@ -50,8 +53,12 @@ private:
 	UIButton* chatButton;
 	UIButton* playButton;
 
+	sf::Font arial;
+	sf::Text diagnosticText;
+
 	bool playing;
 	bool running;
 
 	float tickRate;
+	float latency;
 };

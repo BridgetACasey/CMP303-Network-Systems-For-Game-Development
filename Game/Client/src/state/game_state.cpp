@@ -7,6 +7,7 @@
 GameState::GameState()
 {
 	tickRate = 1000.0f / 64.0f;
+	latency = 0.0f;
 	
 	elapsedTime = 10000.0f;
 	lastTime = 0.0f;
@@ -57,6 +58,16 @@ void GameState::setup()
 	chatButton = new UIButton(context->getInputManager(), "assets/chat-active.png", "assets/chat-idle.png");
 	chatButton->setPosition(sf::Vector2f(1100.0f, 575.0f));
 	chatButton->setSize(sf::Vector2f(75.0f, 75.0f));
+
+	if (!arial.loadFromFile("assets/arial.ttf"))
+	{
+		printf("could not load font");
+	}
+
+	diagnosticText.setFont(arial);
+	diagnosticText.setCharacterSize(24);
+	diagnosticText.setFillColor(sf::Color::White);
+	diagnosticText.setPosition(sf::Vector2f(25.0f, 25.0f));
 }
 
 void GameState::onEnter()
@@ -109,6 +120,8 @@ bool GameState::update(float deltaTime)
 
 	checkQuit();
 
+	diagnosticText.setString(sf::String("Tick Rate: " + std::to_string(tickRate) + "ms   Latency: " + std::to_string((int)latency) + "ms"));
+
 	return running;
 }
 
@@ -139,6 +152,8 @@ void GameState::render()
 
 	context->getWindowManager()->render(*chatBar);
 	context->getWindowManager()->render(*chatManager->getInputText());
+
+	context->getWindowManager()->render(diagnosticText);
 
 	context->getWindowManager()->endRender();
 }
@@ -294,20 +309,33 @@ void GameState::updatePlayerPositions(float deltaTime)
 	{
 		otherPlayer->interpolate(deltaTime);
 
-		if (otherPlayer->getPlayerID() == receivePlayer.id)
+		if (validateData(receivePlayer))
 		{
-			otherPlayer->setVelocity(receivePlayer.velX, receivePlayer.velY);
-			otherPlayer->setNextPosition(receivePlayer.nextPosX, receivePlayer.nextPosY);
+			if (otherPlayer->getPlayerID() == receivePlayer.id)
+			{
+				otherPlayer->setVelocity(receivePlayer.velX, receivePlayer.velY);
+				otherPlayer->setNextPosition(receivePlayer.nextPosX, receivePlayer.nextPosY);
+			}
 		}
+	}
+
+	if (player->getPlayerID() == receivePlayer.id)
+	{
+		latency = (elapsedTime - receivePlayer.time);
 	}
 }
 
 void GameState::updateChatLog(sf::Packet& receivedPacket, float deltaTime)
 {
 	ChatData receiveChat;
-	//context->getNetworkManager()->receiveDataTCP(receiveChat);
+
 	if (receivedPacket >> receiveChat.userName >> receiveChat.messageBuffer)
 	{
+		if (!validateData(receiveChat))
+		{
+			return;
+		}
+
 		std::cout << "(TCP) UNPACKED data successfully - chat message: " << receiveChat.messageBuffer.toAnsiString() << std::endl;
 		if (receiveChat.messageBuffer.getSize() > 0)
 		{
@@ -326,4 +354,36 @@ bool GameState::sendUpdate(float period)
 	}
 
 	return false;
+}
+
+bool GameState::validateData(ChatData& chatData)
+{
+	if (chatData.userName.getSize() > 16)
+		return false;
+	if (chatData.messageBuffer.getSize() > 48)
+		return false;
+
+	return true;
+}
+
+bool GameState::validateData(PlayerData& playerData)
+{
+	if (playerData.id < 0)
+		return false;
+	if (playerData.time < 0.0f)
+		return false;
+	if (playerData.posX < -5.0f || playerData.posX > 1200.0f)
+		return false;
+	if (playerData.posY < -5.0f || playerData.posY > 750.0f)
+		return false;
+	if (playerData.nextPosX < -5.0f || playerData.nextPosX > 1200.0f)
+		return false;
+	if (playerData.nextPosY < -5.0f || playerData.nextPosY > 750.0f)
+		return false;
+	if (playerData.velX < -300.0f || playerData.velX > 300.0f)
+		return false;
+	if (playerData.velY < -300.0f || playerData.velY > 300.0f)
+		return false;
+
+	return true;
 }

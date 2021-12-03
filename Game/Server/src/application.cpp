@@ -206,8 +206,11 @@ void Application::handleDataTCP()
 					else
 					{
 						ChatData chatData;
+						chatData.userName = "NULL";
 						std::cout << "TCP PACKET RECEIVED - CLIENT WANTS TO CHAT!" << std::endl;
 						updateChatLog(receivedPacket, chatData);
+
+						if(chatData.userName != "NULL")
 						currentMessages.push_back(chatData);
 					}
 				}
@@ -253,10 +256,47 @@ void Application::handleDataUDP()
 	}
 }
 
+bool Application::validateData(ChatData& chatData)
+{
+	if (chatData.userName.getSize() > 16)
+		return false;
+	if (chatData.messageBuffer.getSize() > 48)
+		return false;
+
+	return true;
+}
+
+bool Application::validateData(PlayerData& playerData)
+{
+	if (playerData.id < 0)
+		return false;
+	if (playerData.time < 0.0f)
+		return false;
+	if (playerData.posX < -5.0f || playerData.posX > 1200.0f)
+		return false;
+	if (playerData.posY < -5.0f || playerData.posY > 750.0f)
+		return false;
+	if (playerData.nextPosX < -5.0f || playerData.nextPosX > 1200.0f)
+		return false;
+	if (playerData.nextPosY < -5.0f || playerData.nextPosY > 750.0f)
+		return false;
+	if (playerData.velX < -300.0f || playerData.velX > 300.0f)
+		return false;
+	if (playerData.velY < -300.0f || playerData.velY > 300.0f)
+		return false;
+
+	return true;
+}
+
 void Application::updateChatLog(sf::Packet& receivedPacket, ChatData& chatData)
 {
 	if (receivedPacket >> chatData.userName >> chatData.messageBuffer)
 	{
+		if (!validateData(chatData))
+		{
+			return;
+		}
+
 		std::cout << "(TCP) UNPACKED data successfully - chat message: " << chatData.messageBuffer.toAnsiString() << std::endl;
 	
 		if (chatHistory.size() > 100)	//Only keeping a log of the most recent 100 messages sent to the server
@@ -274,6 +314,11 @@ void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& ad
 
 	if (receivedPacket >> playerData.time >> playerData.id >> playerData.posX >> playerData.posY >> playerData.nextPosX >> playerData.nextPosY >> playerData.velX >> playerData.velY)
 	{
+		if (!validateData(playerData))
+		{
+			return;
+		}
+
 		for (Connection* client : clients)
 		{
 			if (client->getClientUDP() == playerData.id)
@@ -297,11 +342,6 @@ void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& ad
 
 	for (Connection* client : clients)
 	{
-		if (client->getClientUDP() == playerData.id)
-		{
-			continue;
-		}
-
 		if (sentPacket << playerData.time << playerData.id << playerData.posX << playerData.posY << playerData.nextPosX << playerData.nextPosY << playerData.velX << playerData.velY)
 		{
 			//std::cout << "(UDP) PACKED data successfully" << std::endl;

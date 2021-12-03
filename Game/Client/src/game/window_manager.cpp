@@ -7,7 +7,7 @@ WindowManager::WindowManager()
     resolution.x = 1200;
     resolution.y = 675;
     
-    window = new sf::RenderWindow(sf::VideoMode(resolution.x, resolution.y), "Client", sf::Style::Titlebar | sf::Style::Close);
+    window = new sf::RenderWindow(sf::VideoMode(resolution.x, resolution.y), "Client", sf::Style::Titlebar);
 }
 
 WindowManager::~WindowManager()
