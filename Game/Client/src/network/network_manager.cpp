@@ -83,9 +83,41 @@ bool NetworkManager::requestConnection()
 	return false;
 }
 
-void NetworkManager::requestDisconnection()
+bool NetworkManager::requestDisconnection()
 {
-	socketTCP->disconnect();
+	sf::Packet sentPacket;
+
+	int quit = -1;
+
+	if (sentPacket << quit)
+	{
+		//Send a request to quit to server, client must wait for approval to close
+		if (socketTCP->send(sentPacket) == sf::Socket::Done)
+		{
+			std::cout << "Requesting to quit" << std::endl;
+
+			//Block the socket while the client waits for a response from the server
+			socketTCP->setBlocking(true);
+
+			sf::Packet receivedPacket;
+
+			if (socketTCP->receive(receivedPacket) == sf::Socket::Done)
+			{
+				if (receivedPacket >> quit)
+				{
+					//Server has confirmed it knows the client wants to disconnect and is erasing relevant data, proceed with closing client application
+					if (quit == -2)
+					{
+						std::cout << "Disconnected from server, closing application..." << std::endl;
+
+						return true;
+					}
+				}
+			}
+		}
+	}
+
+	return false;
 }
 
 bool NetworkManager::sendDataTCP(ChatData& chatData)

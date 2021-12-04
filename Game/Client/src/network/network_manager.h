@@ -17,7 +17,7 @@ public:
 	void bindUDP();
 
 	bool requestConnection();
-	void requestDisconnection();
+	bool requestDisconnection();
 
 	bool sendDataTCP(ChatData& chatData);
 	bool receiveDataTCP(ChatData& chatData);

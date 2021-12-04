@@ -152,11 +152,6 @@ void Application::connectClients()
 			delete clientTCP;	//Client cannot connect, delete TCP socket
 		}
 	}
-
-	else
-	{
-		listener.close();
-	}
 }
 
 //Disconnect clients gracefully and erase their data after receiving the appropriate flag

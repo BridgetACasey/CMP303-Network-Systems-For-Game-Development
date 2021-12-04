@@ -114,6 +114,9 @@ bool GameState::update(float deltaTime)
 
 	updatePlayerPositions(deltaTime);
 
+	checkQuit();
+
+	//Update UI elements
 	if (chatButton->isClicked())
 	{
 		playing = false;
@@ -123,8 +126,6 @@ bool GameState::update(float deltaTime)
 	{
 		playing = true;
 	}
-
-	checkQuit();
 
 	diagnosticText.setString(sf::String("Tick Rate: " + std::to_string(tickRate) + "ms   Latency: " + std::to_string((int)latency) + "ms"));
 
@@ -276,35 +277,9 @@ void GameState::checkQuit()
 {
 	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
 	{
-		sf::Packet sentPacket;
-
-		int quit = -1;
-
-		if (sentPacket << quit)
+		if (context->getNetworkManager()->requestDisconnection())
 		{
-			//Send a request to quit to server, client must wait for approval to close
-			if (context->getNetworkManager()->getSocketTCP()->send(sentPacket) == sf::Socket::Done)
-			{
-				std::cout << "Requesting to quit" << std::endl;
-
-				//Block the socket while the client waits for a response from the server
-				context->getNetworkManager()->getSocketTCP()->setBlocking(true);
-
-				sf::Packet receivedPacket;
-
-				if (context->getNetworkManager()->getSocketTCP()->receive(receivedPacket) == sf::Socket::Done)
-				{
-					if (receivedPacket >> quit)
-					{
-						//Server has confirmed it knows the client wants to disconnect and is erasing relevant data, proceed with closing client application
-						if (quit == -2)
-						{
-							std::cout << "Disconnected from server, closing application..." << std::endl;
-							running = false;
-						}
-					}
-				}
-			}
+			running = false;
 		}
 	}
 }
