@@ -2,6 +2,7 @@
 
 #include "game/application.h"
 
+//The entry point for the client application
 int main()
 {
     Application app;

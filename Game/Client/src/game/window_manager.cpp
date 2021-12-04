@@ -18,11 +18,13 @@ WindowManager::~WindowManager()
 	}
 }
 
+//Clear the buffer
 void WindowManager::beginRender()
 {
     window->clear(sf::Color(96, 96, 128, 255));
 }
 
+//Display the buffer to the screen
 void WindowManager::endRender()
 {
     window->display();

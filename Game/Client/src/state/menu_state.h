@@ -5,6 +5,7 @@
 #include "state.h"
 #include "object/ui_button.h"
 
+//The main menu state - allows user to transition to the game state or close the application
 class MenuState : public State
 {
 public:

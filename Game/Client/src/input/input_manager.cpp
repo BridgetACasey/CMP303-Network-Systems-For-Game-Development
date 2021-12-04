@@ -16,8 +16,3 @@ InputManager::~InputManager()
 		delete mouse;
 	}
 }
-
-void InputManager::update(float deltaTime)
-{
-
-}

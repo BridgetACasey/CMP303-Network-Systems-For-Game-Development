@@ -7,7 +7,7 @@
 
 #include "game/window_manager.h"
 
-enum class InputStatus
+enum class InputStatus	//The current status of a key or mouse button
 {
 	NONE = 0,
 	PRESSED,
@@ -22,13 +22,12 @@ struct Mouse
 	InputStatus rightButton = InputStatus::NONE;
 };
 
+//Manager for handling keyboard and mouse input from the user
 class InputManager
 {
 public:
 	InputManager(WindowManager* window);
 	~InputManager();
-
-	void update(float deltaTime);
 
 	inline void setKeyStatus(sf::Keyboard::Key key, InputStatus status) { keys[key] = status; }
 	const inline InputStatus& getKeyStatus(sf::Keyboard::Key key) const { return keys[key]; }
@@ -49,7 +48,7 @@ private:
 	
 	Mouse* mouse;
 
-	InputStatus keys[100]{ InputStatus::NONE };
+	InputStatus keys[100]{ InputStatus::NONE };	//Contains a status for each of the 100 keyboard keys recognisable by SFML
 
-	char currentCharacter;
+	char currentCharacter;	//The unicode value of the last key that was pressed, converted to char form
 };

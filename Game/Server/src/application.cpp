@@ -4,11 +4,32 @@
 
 #include "application.h"
 
+//Operator overloads for reading and writing between packets and frequently used struct types
+sf::Packet operator << (sf::Packet& packet, const PlayerData& data)
+{
+	return packet << data.time << data.port << data.posX << data.posY << data.nextPosX << data.nextPosY << data.velX << data.velY;
+}
+
+sf::Packet operator >> (sf::Packet& packet, PlayerData& data)
+{
+	return packet >> data.time >> data.port >> data.posX >> data.posY >> data.nextPosX >> data.nextPosY >> data.velX >> data.velY;
+}
+
+sf::Packet operator << (sf::Packet& packet, const ChatData& data)
+{
+	return packet << data.userName << data.messageBuffer;
+}
+
+sf::Packet operator >> (sf::Packet& packet, ChatData& data)
+{
+	return packet >> data.userName >> data.messageBuffer;
+}
+
 const int MAX_CLIENTS = 4;
 
 const sf::IpAddress serverAddress = sf::IpAddress::getLocalAddress();
-const int serverPortTCP = 5555;
-const int serverPortUDP = 4444;
+const sf::Uint16 serverPortTCP = 5555;
+const sf::Uint16 serverPortUDP = 4444;
 
 Application::Application()
 {
@@ -20,6 +41,7 @@ Application::~Application()
 
 }
 
+//Launch and run the server application
 void Application::run()
 {
 	bool running = true;
@@ -40,6 +62,7 @@ void Application::run()
 		serverUDP->setBlocking(false);
 	}
 
+	//Infinite server loop
 	while (running)
 	{
 		if (selector.wait(sf::microseconds(1)))
@@ -57,6 +80,7 @@ void Application::run()
 	}
 }
 
+//Connect clients through TCP so long as there are still less than 4 logged on to the server
 void Application::connectClients()
 {
 	if (clients.size() < MAX_CLIENTS)
@@ -69,30 +93,30 @@ void Application::connectClients()
 
 			if (clientTCP->receive(packet) == sf::Socket::Done)
 			{
-				unsigned short udpPort;
+				sf::Uint16 newClientPort;	//Receive the UDP port that the client is bound to
 
-				if (packet >> udpPort)
+				if (packet >> newClientPort)
 				{
 					//Create TCP sockets for new connections and add them to selector
 					Connection* client = new Connection(clients.size(), clientTCP);
 
 					std::cout << "New client has connected on " << clientTCP->getRemoteAddress().toString() << std::endl;
-					client->setClientUDP(udpPort);
-					std::cout << "Client bound to port " << udpPort << std::endl;
+					client->setClientUDP(newClientPort);
+					std::cout << "Client bound to port " << newClientPort << std::endl;
 
 					clients.push_back(client);
 
 					selector.add(*clientTCP);
 
-					int clientFlag = -1;
-					int clientPort = 0;
+					int clientFlag = -1;	//Send a flag to the clients to determine what to do next: -1 for creating new player instances
+					sf::Uint16 clientPort = 0;	//Let the current client know what ports the others are bound to - this is then used as a type of id
 
 					//Inform newly connected client of other clients on server
 					for (Connection* c : clients)
 					{
 						sf::Packet updateNew;
 
-						clientPort = (int)c->getClientUDP();
+						clientPort = c->getClientUDP();
 
 						if (updateNew << clientFlag << clientPort)
 						{
@@ -105,7 +129,7 @@ void Application::connectClients()
 
 					//Inform other clients on the server of the newly connected client
 					sf::Packet updateOther;
-					clientPort = (int)udpPort;
+					clientPort = newClientPort;
 
 					if (updateOther << clientFlag << clientPort)
 					{
@@ -128,13 +152,19 @@ void Application::connectClients()
 			delete clientTCP;	//Client cannot connect, delete TCP socket
 		}
 	}
+
+	else
+	{
+		listener.close();
+	}
 }
 
-void Application::disconnectClients(sf::Packet& receivedPacket, int id)
+//Disconnect clients gracefully and erase their data after receiving the appropriate flag
+void Application::disconnectClients(sf::Packet& receivedPacket, unsigned int id)
 {
 	int quit;
-	int clientFlag = -2;
-	int clientPort = clients.at(id)->getClientUDP();
+	int clientFlag = -2;	//Flag value of -2 means a player instance needs to be removed, as the client has disconnected
+	sf::Uint16 clientPort = clients.at(id)->getClientUDP();
 
 	if (receivedPacket >> quit)
 	{
@@ -144,10 +174,12 @@ void Application::disconnectClients(sf::Packet& receivedPacket, int id)
 		{
 			std::cout << "(TCP) Client wishes to QUIT!" << std::endl;
 			
+			//Confirming that request to disconnect has been received
 			quit = -2;
 
 			if (sentPacket << quit)
 			{
+				//Inform client that their request has been accepted and erase them from the list of connected clients
 				if (clients.at(id)->getClientTCP()->send(sentPacket) == sf::Socket::Done)
 				{
 					std::cout << "(TCP) Disconnecting client..." << std::endl;
@@ -161,6 +193,7 @@ void Application::disconnectClients(sf::Packet& receivedPacket, int id)
 
 	clients.shrink_to_fit();
 
+	//Reordering client IDs after the disconnected one has been removed
 	for (int i = 0; i < clients.size(); i++)
 	{
 		clients.at(i)->setClientID(i);
@@ -168,6 +201,7 @@ void Application::disconnectClients(sf::Packet& receivedPacket, int id)
 
 	sf::Packet updatePacket;
 
+	//Let other clients know about the disconnection so they can delete the respective player object
 	if (updatePacket << clientFlag << clientPort)
 	{
 		for (Connection* client : clients)
@@ -197,14 +231,14 @@ void Application::handleDataTCP()
 				{
 					std::cout << "(TCP) RECEIVED packet successfully" << std::endl;
 
-					if (receivedPacket.getDataSize() == sizeof(int))
+					if (receivedPacket.getDataSize() == sizeof(int))	//If only a single int has been received, client wishes to disconnect
 					{
 						disconnectClients(receivedPacket, i);
 					}
 
 					else
 					{
-						ChatData chatData;
+						ChatData chatData;	//Otherwise, the packet most likely contains a chat message
 						chatData.userName = "NULL";
 						updateChatLog(receivedPacket, chatData);
 
@@ -225,7 +259,7 @@ void Application::handleDataTCP()
 			{
 				sf::Packet sentPacket;
 
-				if (sentPacket << currentMsg.userName << currentMsg.messageBuffer)
+				if (sentPacket << currentMsg)
 				{
 					std::cout << "(TCP) PACKED data successfully" << std::endl;
 
@@ -254,6 +288,72 @@ void Application::handleDataUDP()
 	}
 }
 
+void Application::updateChatLog(sf::Packet& receivedPacket, ChatData& chatData)
+{
+	if (receivedPacket >> chatData)
+	{
+		if (!validateData(chatData))
+		{
+			return;
+		}
+
+		std::cout << "(TCP) UNPACKED data successfully - chat message: " << chatData.messageBuffer.toAnsiString() << std::endl;
+
+		if (chatHistory.size() > 100)	//Only keeping a log of the most recent 100 messages sent to the server
+		{
+			chatHistory.erase(chatHistory.begin());
+		}
+
+		chatHistory.push_back(chatData);
+	}
+}
+
+void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& address)
+{
+	PlayerData playerData;
+
+	if (receivedPacket >> playerData)
+	{
+		if (!validateData(playerData))
+		{
+			return;
+		}
+
+		for (Connection* client : clients)
+		{
+			if (client->getClientUDP() == playerData.port)
+			{
+				for (auto& data : client->getPlayerPackets())	//Avoiding duplicate packets
+				{
+					if (data.time == playerData.time)
+					{
+						return;
+					}
+				}
+
+				client->insertPacket(playerData);
+				client->predictMovement();
+				playerData = client->getPlayerPackets().back();	//Grab the last packet after prediction has been calculated
+			}
+		}
+	}
+
+	sf::Packet sentPacket;
+
+	//Sending data for the current client back to all clients logged on
+	for (Connection* client : clients)
+	{
+		if (sentPacket << playerData)
+		{
+			if (serverUDP->send(sentPacket, address, client->getClientUDP()) == sf::Socket::Done)
+			{
+				//std::cout << "(UDP) SENT packet successfully to port " << client->getClientUDP() << std::endl;
+			}
+		}
+	}
+}
+
+//Checking that received packets contain sensible data, otherwise they have likely been tampered with
 bool Application::validateData(ChatData& chatData)
 {
 	if (chatData.userName.getSize() > 16)
@@ -264,9 +364,10 @@ bool Application::validateData(ChatData& chatData)
 	return true;
 }
 
+//Checking that received packets contain sensible data, otherwise they have likely been tampered with
 bool Application::validateData(PlayerData& playerData)
 {
-	if (playerData.id < 0)
+	if (playerData.port < 0 || playerData.port > 65535)
 		return false;
 	if (playerData.time < 0.0f)
 		return false;
@@ -284,71 +385,4 @@ bool Application::validateData(PlayerData& playerData)
 		return false;
 
 	return true;
-}
-
-void Application::updateChatLog(sf::Packet& receivedPacket, ChatData& chatData)
-{
-	if (receivedPacket >> chatData.userName >> chatData.messageBuffer)
-	{
-		if (!validateData(chatData))
-		{
-			return;
-		}
-
-		std::cout << "(TCP) UNPACKED data successfully - chat message: " << chatData.messageBuffer.toAnsiString() << std::endl;
-	
-		if (chatHistory.size() > 100)	//Only keeping a log of the most recent 100 messages sent to the server
-		{
-			chatHistory.erase(chatHistory.begin());
-		}
-	
-		chatHistory.push_back(chatData);
-	}
-}
-
-void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& address)
-{
-	PlayerData playerData;
-
-	if (receivedPacket >> playerData.time >> playerData.id >> playerData.posX >> playerData.posY >> playerData.nextPosX >> playerData.nextPosY >> playerData.velX >> playerData.velY)
-	{
-		if (!validateData(playerData))
-		{
-			return;
-		}
-
-		for (Connection* client : clients)
-		{
-			if (client->getClientUDP() == playerData.id)
-			{
-				for (auto& data : client->getPlayerPackets())	//Avoiding duplicate packets
-				{
-					if (data.time == playerData.time)
-					{
-						return;
-					}
-				}
-
-				client->insertPacket(playerData);
-				client->predictMovement();
-				playerData = client->getPlayerPackets().back();
-			}
-		}
-	}
-
-	sf::Packet sentPacket;
-
-	for (Connection* client : clients)
-	{
-		if (sentPacket << playerData.time << playerData.id << playerData.posX << playerData.posY << playerData.nextPosX << playerData.nextPosY << playerData.velX << playerData.velY)
-		{
-			//std::cout << "(UDP) PACKED data successfully" << std::endl;
-
-			//Sending messages back to clients
-			if (serverUDP->send(sentPacket, address, client->getClientUDP()) == sf::Socket::Done)
-			{
-				//std::cout << "(UDP) SENT packet successfully to port " << client->getClientUDP() << std::endl;
-			}
-		}
-	}
 }

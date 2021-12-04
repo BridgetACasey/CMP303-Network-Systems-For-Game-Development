@@ -7,6 +7,7 @@
 #include "window_manager.h"
 #include "state/context.h"
 
+//Contains the SFML event and window loop for the client application
 class Application
 {
 public:

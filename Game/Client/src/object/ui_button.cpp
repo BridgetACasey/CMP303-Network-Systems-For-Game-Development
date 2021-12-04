@@ -26,9 +26,18 @@ UIButton::UIButton(InputManager* input, const char* active, const char* idle)
 
 UIButton::~UIButton()
 {
+	if (activeTexture)
+	{
+		delete activeTexture;
+	}
 
+	if (idleTexture)
+	{
+		delete idleTexture;
+	}
 }
 
+//Returns true if the mouse cursor is making contact with the button object
 bool UIButton::isHovering()
 {
 	//The bounds of the ui button object
@@ -50,6 +59,7 @@ bool UIButton::isHovering()
 	return false;
 }
 
+//Returns true if the mouse cursor is both making contact with the button object and pressing the left mouse button
 bool UIButton::isClicked()
 {
 	if (isHovering())

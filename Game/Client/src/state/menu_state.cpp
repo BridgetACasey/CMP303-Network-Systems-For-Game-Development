@@ -11,7 +11,15 @@ MenuState::MenuState()
 
 MenuState::~MenuState()
 {
+	if (connectButton)
+	{
+		delete connectButton;
+	}
 
+	if (quitButton)
+	{
+		delete quitButton;
+	}
 }
 
 void MenuState::setup()
@@ -40,19 +48,16 @@ void MenuState::onExit()
 
 bool MenuState::update(float deltaTime)
 {
-	context->getInputManager()->update(deltaTime);
-
 	if (connectButton->isClicked())
 	{
-		context->getNetworkManager()->requestConnection();
-
-		context->setActiveState(StateLabel::GAME);
+		if (context->getNetworkManager()->requestConnection())
+		{
+			context->setActiveState(StateLabel::GAME);
+		}
 	}
 
 	if ((context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED) || quitButton->isClicked())
 	{
-		context->getNetworkManager()->requestDisconnection();
-		
 		return false;
 	}
 

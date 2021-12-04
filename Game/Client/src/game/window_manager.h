@@ -4,6 +4,7 @@
 
 #include <SFML/Graphics/RenderWindow.hpp>
 
+//Encapsulates data and functionality relevant to the SFML render window object
 class WindowManager
 {
 public:
@@ -24,5 +25,5 @@ private:
 	sf::RenderWindow* window;
 
 	sf::Vector2u resolution;
-	sf::Vector2f resolutionScale;
+	sf::Vector2f resolutionScale;	//A multiplier for determining where to place objects on the screen relative to the new resolution
 };

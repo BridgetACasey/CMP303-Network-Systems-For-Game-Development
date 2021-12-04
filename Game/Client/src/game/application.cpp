@@ -29,6 +29,7 @@ void Application::run()
 {
 	bool running = true;
 
+	//Run the client application window and check for events
 	while (running)
 	{
 		sf::Event event;
@@ -50,13 +51,13 @@ void Application::run()
 
 			if (event.type == sf::Event::KeyPressed)
 			{
-				if(event.key.code > -1)
+				if(event.key.code > -1)	//Check that the key pressed is valid, otherwise don't pass it to InputManager
 				context->getInputManager()->setKeyStatus(event.key.code, InputStatus::PRESSED);
 			}
 
 			if (event.type == sf::Event::KeyReleased)
 			{
-				if (event.key.code > -1)
+				if (event.key.code > -1) //Check that the key released is valid, otherwise don't pass it to InputManager
 				context->getInputManager()->setKeyStatus(event.key.code, InputStatus::RELEASED);
 			}
 
@@ -95,16 +96,18 @@ void Application::run()
 			{
 				if (event.text.unicode > 31 && event.text.unicode < 127)	//Can be printed to the screen
 				{
+					//Grab the last printable key that was pressed and convert to char
 					context->getInputManager()->setCurrentChar((char)event.text.unicode);
 				}
 			}
 
 			else
 			{
-				context->getInputManager()->setCurrentChar(0);
+				context->getInputManager()->setCurrentChar(0);	//No printable keys are being pressed, reset the current char
 			}
 		}
 
+		//So long as the active state is being updated, keep the SFML window open and render to it
 		running = context->getActiveState()->update(getDeltaTime());
 		context->getActiveState()->render();
 	}

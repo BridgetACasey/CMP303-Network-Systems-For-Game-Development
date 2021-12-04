@@ -6,7 +6,7 @@
 
 GameState::GameState()
 {
-	tickRate = 1000.0f / 64.0f;
+	tickRate = 1000.0f / 64.0f;	//By default, the tick rate is approximately 15ms
 	latency = 0.0f;
 	
 	elapsedTime = 10000.0f;
@@ -33,7 +33,8 @@ void GameState::setup()
 
 	player = new Player(context->getInputManager());
 
-	player->setPlayerID(context->getNetworkManager()->getSocketUDP()->getLocalPort());
+	//Set the player's form of ID to the current UDP port
+	player->setPlayerPort(context->getNetworkManager()->getSocketUDP()->getLocalPort());
 	player->setPosition(sf::Vector2f(575.0f, 300.0f));
 	player->setSize(sf::Vector2f(50.0f, 50.0f));
 
@@ -68,6 +69,12 @@ void GameState::setup()
 	diagnosticText.setCharacterSize(24);
 	diagnosticText.setFillColor(sf::Color::White);
 	diagnosticText.setPosition(sf::Vector2f(25.0f, 25.0f));
+
+	modeText.setFont(arial);
+	modeText.setStyle(sf::Text::Bold);
+	modeText.setCharacterSize(24);
+	modeText.setFillColor(sf::Color::White);
+	modeText.setPosition(sf::Vector2f(25.0f, 65.0f));
 }
 
 void GameState::onEnter()
@@ -87,14 +94,13 @@ bool GameState::update(float deltaTime)
 {
 	elapsedTime = (float)getClientTime();
 
-	context->getInputManager()->update(deltaTime);
-
 	updateGameState(deltaTime);
 
-	if (!playing)
+	if (!playing)	//If not controlling an avatar, update the chat's input stream
 	{
 		chatManager->updateMessageStream(deltaTime);
 
+		//Send the message to the server once ENTER has been pressed
 		if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Enter) == InputStatus::PRESSED)
 		{
 			context->getInputManager()->setKeyStatus(sf::Keyboard::Key::Enter, InputStatus::NONE);
@@ -122,6 +128,16 @@ bool GameState::update(float deltaTime)
 
 	diagnosticText.setString(sf::String("Tick Rate: " + std::to_string(tickRate) + "ms   Latency: " + std::to_string((int)latency) + "ms"));
 
+	if (playing)
+	{
+		modeText.setString(sf::String("MODE: PLAYING"));
+	}
+
+	else
+	{
+		modeText.setString(sf::String("MODE: CHATTING"));
+	}
+
 	return running;
 }
 
@@ -129,6 +145,7 @@ void GameState::render()
 {
 	context->getWindowManager()->beginRender();
 
+	//Render all other connected clients' avatars, if any exist
 	for (Player* otherPlayer : otherPlayers)
 	{
 		if (otherPlayer)
@@ -137,14 +154,10 @@ void GameState::render()
 		}
 	}
 
-	if (player)
-	{
-		context->getWindowManager()->render(*player);
-	}
+	//Render this client's player avatar on top of the others
+	context->getWindowManager()->render(*player);
 
-	context->getWindowManager()->render(*chatButton);
-	context->getWindowManager()->render(*playButton);
-
+	//Render the chat messages and input box
 	for (sf::Text text : chatManager->getChatMessages())
 	{
 		context->getWindowManager()->render(text);
@@ -153,33 +166,41 @@ void GameState::render()
 	context->getWindowManager()->render(*chatBar);
 	context->getWindowManager()->render(*chatManager->getInputText());
 
+	//Render other UI elements
+	context->getWindowManager()->render(*chatButton);
+	context->getWindowManager()->render(*playButton);
+
 	context->getWindowManager()->render(diagnosticText);
+	context->getWindowManager()->render(modeText);
 
 	context->getWindowManager()->endRender();
 }
 
 void GameState::updatePlayerPositions(float deltaTime)
 {
-	if (playing)
+	//Update active player position
+	player->checkBounds((float)context->getWindowManager()->getWindow()->getSize().x, (float)context->getWindowManager()->getWindow()->getSize().y);
+	player->update(deltaTime);
+
+	if (playing)	//If in 'play' mode, listen for keyboard input from the user
 	{
-		player->checkBounds((float)context->getWindowManager()->getWindow()->getSize().x, (float)context->getWindowManager()->getWindow()->getSize().y);
-		player->update(deltaTime);
+		player->getUserInput();
 	}
-
-	//Send player data by UDP
-	PlayerData playerData;
-
-	playerData.time = elapsedTime;
-	playerData.id = player->getPlayerID();
-	playerData.posX = player->getPosition().x;
-	playerData.posY = player->getPosition().y;
-	playerData.nextPosX = player->getNextPosition().x;
-	playerData.nextPosY = player->getNextPosition().y;
-	playerData.velX = player->getVelocity().x;
-	playerData.velY = player->getVelocity().y;
 
 	if (sendUpdate(tickRate))
 	{
+		//Send player data by UDP
+		PlayerData playerData;
+
+		playerData.time = elapsedTime;
+		playerData.port = player->getPlayerPort();
+		playerData.posX = player->getPosition().x;
+		playerData.posY = player->getPosition().y;
+		playerData.nextPosX = player->getNextPosition().x;
+		playerData.nextPosY = player->getNextPosition().y;
+		playerData.velX = player->getVelocity().x;
+		playerData.velY = player->getVelocity().y;
+
 		context->getNetworkManager()->sendDataUDP(playerData);
 	}
 
@@ -188,7 +209,7 @@ void GameState::updatePlayerPositions(float deltaTime)
 
 	if (context->getNetworkManager()->receiveDataUDP(receivePlayer))
 	{
-		if (player->getPlayerID() == receivePlayer.id)
+		if (player->getPlayerPort() == receivePlayer.port)
 		{
 			latency = (elapsedTime - receivePlayer.time);
 		}
@@ -198,7 +219,7 @@ void GameState::updatePlayerPositions(float deltaTime)
 	{
 		otherPlayer->interpolate(deltaTime);
 
-		if (otherPlayer->getPlayerID() == receivePlayer.id)
+		if (otherPlayer->getPlayerPort() == receivePlayer.port)
 		{
 			otherPlayer->setVelocity(receivePlayer.velX, receivePlayer.velY);
 			otherPlayer->setNextPosition(receivePlayer.nextPosX, receivePlayer.nextPosY);
@@ -210,14 +231,8 @@ void GameState::updateChatLog(sf::Packet& receivedPacket, float deltaTime)
 {
 	ChatData receiveChat;
 
-	if (receivedPacket >> receiveChat.userName >> receiveChat.messageBuffer)
+	if (context->getNetworkManager()->receiveChatData(receiveChat, receivedPacket))
 	{
-		if (!context->getNetworkManager()->validateData(receiveChat))
-		{
-			return;
-		}
-
-		std::cout << "(TCP) UNPACKED data successfully - chat message: " << receiveChat.messageBuffer.toAnsiString() << std::endl;
 		if (receiveChat.messageBuffer.getSize() > 0)
 		{
 			chatManager->addNewMessage(receiveChat.userName, receiveChat.messageBuffer);
@@ -225,6 +240,7 @@ void GameState::updateChatLog(sf::Packet& receivedPacket, float deltaTime)
 	}
 }
 
+//Returns true if it has been more than the specified time since an update was sent to the server
 bool GameState::sendUpdate(float period)
 {
 	if ((elapsedTime - lastTime) >= period)
@@ -243,8 +259,9 @@ void GameState::updateGameState(float deltaTime)
 
 	if (context->getNetworkManager()->getSocketTCP()->receive(updatePacket) == sf::Socket::Done)
 	{
-		if (updatePacket.getDataSize() == (sizeof(int) * 2))
+		if (updatePacket.getDataSize() == sizeof(int) + sizeof(sf::Uint16))
 		{
+			//A client has connected to or disconnected from the server, update relevant player data
 			updatePlayerCount(updatePacket);
 		}
 
@@ -265,10 +282,12 @@ void GameState::checkQuit()
 
 		if (sentPacket << quit)
 		{
+			//Send a request to quit to server, client must wait for approval to close
 			if (context->getNetworkManager()->getSocketTCP()->send(sentPacket) == sf::Socket::Done)
 			{
 				std::cout << "Requesting to quit" << std::endl;
 
+				//Block the socket while the client waits for a response from the server
 				context->getNetworkManager()->getSocketTCP()->setBlocking(true);
 
 				sf::Packet receivedPacket;
@@ -277,6 +296,7 @@ void GameState::checkQuit()
 				{
 					if (receivedPacket >> quit)
 					{
+						//Server has confirmed it knows the client wants to disconnect and is erasing relevant data, proceed with closing client application
 						if (quit == -2)
 						{
 							std::cout << "Disconnected from server, closing application..." << std::endl;
@@ -292,11 +312,11 @@ void GameState::checkQuit()
 void GameState::updatePlayerCount(sf::Packet& receivedPacket)
 {
 	int clientFlag;
-	int clientPort;
+	sf::Uint16 clientPort;
 
 	if (receivedPacket >> clientFlag >> clientPort)
 	{
-		if (clientPort != player->getPlayerID())
+		if (clientPort != player->getPlayerPort())
 		{
 			if (clientFlag == -1)
 			{
@@ -307,25 +327,27 @@ void GameState::updatePlayerCount(sf::Packet& receivedPacket)
 			{
 				removePlayerInstance(clientPort);
 			}
-
+			
+			//Update tick rate to accommodate for how many clients are connected to the server
 			tickRate = 1000.0f / (64.0f / (1 + otherPlayers.size()));
 		}
 	}
 }
 
-void GameState::createPlayerInstance(int id)
+void GameState::createPlayerInstance(sf::Uint16 port)
 {
 	for (Player* other : otherPlayers)
 	{
-		if (other->getPlayerID() == id)
+		if (other->getPlayerPort() == port)
 		{
+			//If an instance of the current player has already been created, avoid creating a duplicate
 			return;
 		}
 	}
 	
 	Player* newPlayer = new Player(context->getInputManager());
 
-	newPlayer->setPlayerID(id);
+	newPlayer->setPlayerPort(port);
 	newPlayer->setPosition(sf::Vector2f(575.0f, 300.0f));
 	newPlayer->setSize(sf::Vector2f(50.0f, 50.0f));
 
@@ -341,11 +363,11 @@ void GameState::createPlayerInstance(int id)
 	otherPlayers.push_back(newPlayer);
 }
 
-void GameState::removePlayerInstance(int id)
+void GameState::removePlayerInstance(sf::Uint16 port)
 {
 	for (int i = 0; i < otherPlayers.size(); i++)
 	{
-		if (otherPlayers.at(i)->getPlayerID() == id)
+		if (otherPlayers.at(i)->getPlayerPort() == port)
 		{
 			otherPlayers.erase(otherPlayers.begin() + i);
 		}

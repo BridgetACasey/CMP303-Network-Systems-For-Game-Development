@@ -7,6 +7,7 @@
 
 #include "input_manager.h"
 
+//Handles the input stream for the chat feature
 class ChatManager
 {
 public:
@@ -23,11 +24,11 @@ private:
 	InputManager* inputManager;
 	
 	sf::Font arial;
-	sf::Text* inputText;
-	sf::String inputMessage;
+	sf::Text* inputText;	//The rendered text object storing the contents of inputMessage
+	sf::String inputMessage;	//The string that is written to when the user presses a printable key
 
-	std::vector<sf::Text> chatMessages;
+	std::vector<sf::Text> chatMessages;	//The log of chat messages sent and received by the client
 
-	char last;
-	float delay;
+	char last;	//The last character that was inserted into the message stream
+	float delay;	//Timer variable used when client wants to insert a series of duplicate characters
 };

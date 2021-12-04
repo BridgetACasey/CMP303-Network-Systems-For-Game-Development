@@ -11,6 +11,7 @@
 #include "player_data.h"
 #include "chat_data.h"
 
+//Contains all of the network functionality for the server application
 class Application
 {
 public:
@@ -21,16 +22,16 @@ public:
 
 private:	
 	void connectClients();
-	void disconnectClients(sf::Packet& receivedPacket, int id);
+	void disconnectClients(sf::Packet& receivedPacket, unsigned int id);
 
 	void handleDataTCP();
 	void handleDataUDP();
 
-	bool validateData(ChatData& chatData);
-	bool validateData(PlayerData& playerData);
-
 	void updateChatLog(sf::Packet& receivedPacket, ChatData& chatData);
 	void updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& address);
+
+	bool validateData(ChatData& chatData);
+	bool validateData(PlayerData& playerData);
 
 	sf::TcpListener listener;
 	sf::SocketSelector selector;

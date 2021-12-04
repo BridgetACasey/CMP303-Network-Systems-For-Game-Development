@@ -10,6 +10,7 @@
 #include "menu_state.h"
 #include "game_state.h"
 
+//Similar to a game state manager, stores all of the key objects that each state needs
 class Context
 {
 public:
@@ -32,7 +33,4 @@ private:
 	InputManager* inputManager;
 	NetworkManager* networkManager;
 	WindowManager* windowManager;
-
-	sf::TcpSocket* socketTCP;
-	sf::UdpSocket* socketUDP;
 };

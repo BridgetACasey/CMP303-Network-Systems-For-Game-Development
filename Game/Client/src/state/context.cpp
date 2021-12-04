@@ -16,11 +16,17 @@ Context::Context(NetworkManager* network, WindowManager* window)
 	states[StateLabel::MENU] = menu;
 	states[StateLabel::GAME] = game;
 
+	//Sets the menu state to display upon launching the application
 	setActiveState(StateLabel::MENU);
 }
 
 Context::~Context()
 {
+	if (inputManager)
+	{
+		delete inputManager;
+	}
+
 	if (states[StateLabel::MENU])
 	{
 		delete states[StateLabel::MENU];
