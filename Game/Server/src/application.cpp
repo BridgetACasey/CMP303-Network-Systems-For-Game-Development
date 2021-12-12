@@ -95,21 +95,18 @@ void Application::connectClients()
 			if (clientTCP->receive(packet) == sf::Socket::Done)
 			{
 				sf::Uint16 newClientPort;	//Receive the UDP port that the client is bound to
-				sf::IpAddress newClientAddress;
+				sf::Uint32 newClientAddress;
 
-				if (packet >> newClientPort)
+				if (packet >> newClientPort >> newClientAddress)
 				{
 					//Create TCP sockets for new connections and add them to selector
 					Connection* client = new Connection(clients.size(), clientTCP);
 
-					newClientAddress = clientTCP->getRemoteAddress().getLocalAddress();
-
-					std::cout << "New client has connected on " << newClientAddress << std::endl;
-
 					client->setClientUDP(newClientPort);
 					client->setClientAddress(newClientAddress);
 
-					std::cout << "Client bound to port " << newClientPort  << std::endl;
+					std::cout << "New client has connected on " << client->getClientUDP() << std::endl;
+					std::cout << "Client bound to port " << client->getClientAddress().toString() << std::endl;
 
 					clients.push_back(client);
 

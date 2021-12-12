@@ -71,7 +71,9 @@ bool NetworkManager::requestConnection()
 
 		sf::Packet packet;
 
-		packet << socketUDP->getLocalPort();
+		sf::Uint32 address = sf::IpAddress::getLocalAddress().toInteger();
+
+		packet << socketUDP->getLocalPort() << address;
 
 		if (socketTCP->send(packet) == sf::Socket::Done)
 		{
