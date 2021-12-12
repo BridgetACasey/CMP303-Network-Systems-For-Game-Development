@@ -27,7 +27,8 @@ sf::Packet operator >> (sf::Packet& packet, ChatData& data)
 
 const int MAX_CLIENTS = 4;
 
-const sf::IpAddress serverAddress = sf::IpAddress::getLocalAddress();
+//const sf::IpAddress serverAddress = sf::IpAddress::getLocalAddress();
+const sf::IpAddress serverAddress = "192.168.0.18";
 const sf::Uint16 serverPortTCP = 5555;
 const sf::Uint16 serverPortUDP = 4444;
 
@@ -94,15 +95,21 @@ void Application::connectClients()
 			if (clientTCP->receive(packet) == sf::Socket::Done)
 			{
 				sf::Uint16 newClientPort;	//Receive the UDP port that the client is bound to
+				sf::IpAddress newClientAddress;
 
 				if (packet >> newClientPort)
 				{
 					//Create TCP sockets for new connections and add them to selector
 					Connection* client = new Connection(clients.size(), clientTCP);
 
-					std::cout << "New client has connected on " << clientTCP->getRemoteAddress().toString() << std::endl;
+					newClientAddress = clientTCP->getRemoteAddress().getLocalAddress();
+
+					std::cout << "New client has connected on " << newClientAddress << std::endl;
+
 					client->setClientUDP(newClientPort);
-					std::cout << "Client bound to port " << newClientPort << std::endl;
+					client->setClientAddress(newClientAddress);
+
+					std::cout << "Client bound to port " << newClientPort  << std::endl;
 
 					clients.push_back(client);
 
@@ -340,7 +347,7 @@ void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& ad
 	{
 		if (sentPacket << playerData)
 		{
-			if (serverUDP->send(sentPacket, address, client->getClientUDP()) == sf::Socket::Done)
+			if (serverUDP->send(sentPacket, client->getClientAddress(), client->getClientUDP()) == sf::Socket::Done)
 			{
 				//std::cout << "(UDP) SENT packet successfully to port " << client->getClientUDP() << std::endl;
 			}

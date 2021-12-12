@@ -25,7 +25,8 @@ sf::Packet operator >> (sf::Packet& packet, ChatData& data)
 	return packet >> data.userName >> data.messageBuffer;
 }
 
-const sf::IpAddress serverAddress = sf::IpAddress::getLocalAddress();
+//const sf::IpAddress serverAddress = sf::IpAddress::getLocalAddress();
+const sf::IpAddress serverAddress = "192.168.0.18";
 const sf::Uint16 serverPortTCP = 5555;
 const sf::Uint16 serverPortUDP = 4444;
 

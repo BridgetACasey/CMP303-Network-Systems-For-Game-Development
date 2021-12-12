@@ -25,9 +25,13 @@ public:
 	inline void setClientUDP(unsigned short udp) { clientUDP = udp; }
 	inline sf::Uint16 getClientUDP() const { return clientUDP; }
 
+	inline void setClientAddress(sf::IpAddress& address) { clientAddress = address; }
+	inline sf::IpAddress& getClientAddress() { return clientAddress; }
+
 private:
 	std::vector<PlayerData> playerPackets;
 	int clientID;	//Value ranging from 0 to 3 - the index of the client
 	sf::TcpSocket* clientTCP;
 	sf::Uint16 clientUDP;	//The UDP port that the client has bound themselves to
+	sf::IpAddress clientAddress;
 };
