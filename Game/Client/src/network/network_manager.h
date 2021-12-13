@@ -16,7 +16,7 @@ public:
 
 	void bindUDP();
 
-	bool requestConnection();
+	bool requestConnection(const sf::String& address);
 	bool requestDisconnection();
 
 	bool sendDataTCP(ChatData& chatData);
@@ -33,6 +33,8 @@ public:
 	inline sf::UdpSocket* getSocketUDP() const { return socketUDP; }
 
 private:
+	sf::IpAddress serverAddress;
+	
 	//The client's TCP and UDP sockets
 	sf::TcpSocket* socketTCP;
 	sf::UdpSocket* socketUDP;

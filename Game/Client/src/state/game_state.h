@@ -26,6 +26,7 @@ private:
 	
 	void updateGameState(float deltaTime);
 	void checkQuit();
+	void updateUI();
 	void updatePlayerCount(sf::Packet& receivedPacket);
 	void createPlayerInstance(sf::Uint16 port);
 	void removePlayerInstance(sf::Uint16 port);
@@ -53,10 +54,14 @@ private:
 
 	sf::Font arial;
 	sf::Text diagnosticText;
+	sf::Text ghostText;
+	sf::Text moveText;
 	sf::Text modeText;
 
 	bool playing;	//Used to determine if the user is actively controlling their avatar or chatting
 	bool running;
+
+	bool enableGhosts;
 
 	float tickRate;	//The variable rate at which updates are being sent to the server
 	float latency;

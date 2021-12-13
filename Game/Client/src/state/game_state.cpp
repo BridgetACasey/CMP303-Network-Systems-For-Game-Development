@@ -20,6 +20,8 @@ GameState::GameState()
 
 	playing = true;
 	running = true;
+
+	enableGhosts = true;
 }
 
 GameState::~GameState()
@@ -37,15 +39,16 @@ void GameState::setup()
 	player->setPlayerPort(context->getNetworkManager()->getSocketUDP()->getLocalPort());
 	player->setPosition(sf::Vector2f(575.0f, 300.0f));
 	player->setSize(sf::Vector2f(50.0f, 50.0f));
+	player->setPlayerTexture("assets/player-sprite.png");
 
-	sf::Texture* playerTexture = new sf::Texture();
+	sf::Text* playerName = new sf::Text();
+	playerName->setFont(arial);
+	playerName->setCharacterSize(24);
+	playerName->setFillColor(sf::Color::White);
+	playerName->setString(sf::String("P_" + std::to_string(player->getPlayerPort())));
 
-	if (!playerTexture->loadFromFile("assets/player-sprite.png"))
-	{
-		std::cout << "could not load texture" << std::endl;
-	}
-
-	player->setTexture(playerTexture);
+	player->setNamePlate(playerName);
+	player->setActivePlayer(true);
 
 	chatBar = new GameObject();
 	chatBar->setFillColor(sf::Color(0, 0, 0, 64));
@@ -70,11 +73,21 @@ void GameState::setup()
 	diagnosticText.setFillColor(sf::Color::White);
 	diagnosticText.setPosition(sf::Vector2f(25.0f, 25.0f));
 
+	ghostText.setFont(arial);
+	ghostText.setCharacterSize(24);
+	ghostText.setFillColor(sf::Color::White);
+	ghostText.setPosition(sf::Vector2f(25.0f, 55.0f));
+
+	moveText.setFont(arial);
+	moveText.setCharacterSize(24);
+	moveText.setFillColor(sf::Color::White);
+	moveText.setPosition(sf::Vector2f(185.0f, 55.0f));
+
 	modeText.setFont(arial);
 	modeText.setStyle(sf::Text::Bold);
 	modeText.setCharacterSize(24);
 	modeText.setFillColor(sf::Color::White);
-	modeText.setPosition(sf::Vector2f(25.0f, 65.0f));
+	modeText.setPosition(sf::Vector2f(25.0f, 85.0f));
 }
 
 void GameState::onEnter()
@@ -112,32 +125,25 @@ bool GameState::update(float deltaTime)
 		}
 	}
 
+	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::G) == InputStatus::PRESSED)
+	{
+		context->getInputManager()->setKeyStatus(sf::Keyboard::Key::G, InputStatus::NONE);
+
+		enableGhosts = !enableGhosts;
+	}
+
+	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::M) == InputStatus::PRESSED)
+	{
+		context->getInputManager()->setKeyStatus(sf::Keyboard::Key::M, InputStatus::NONE);
+
+		player->setConstantMove(!player->getConstantMove());
+	}
+
 	updatePlayerPositions(deltaTime);
 
 	checkQuit();
 
-	//Update UI elements
-	if (chatButton->isClicked())
-	{
-		playing = false;
-	}
-
-	if (playButton->isClicked())
-	{
-		playing = true;
-	}
-
-	diagnosticText.setString(sf::String("Tick Rate: " + std::to_string(tickRate) + "ms   Latency: " + std::to_string((int)latency) + "ms"));
-
-	if (playing)
-	{
-		modeText.setString(sf::String("MODE: PLAYING"));
-	}
-
-	else
-	{
-		modeText.setString(sf::String("MODE: CHATTING"));
-	}
+	updateUI();
 
 	return running;
 }
@@ -151,12 +157,33 @@ void GameState::render()
 	{
 		if (otherPlayer)
 		{
+			if (enableGhosts)
+			{
+				if (otherPlayer->getGhost())
+				{
+					context->getWindowManager()->render(*otherPlayer->getGhost());
+				}
+			}
+
+			if (otherPlayer->getNamePlate())
+			{
+				context->getWindowManager()->render(*otherPlayer->getNamePlate());
+			}
+
 			context->getWindowManager()->render(*otherPlayer);
 		}
 	}
 
 	//Render this client's player avatar on top of the others
-	context->getWindowManager()->render(*player);
+	if (player)
+	{
+		if (player->getNamePlate())
+		{
+			context->getWindowManager()->render(*player->getNamePlate());
+		}
+
+		context->getWindowManager()->render(*player);
+	}
 
 	//Render the chat messages and input box
 	for (sf::Text text : chatManager->getChatMessages())
@@ -172,6 +199,8 @@ void GameState::render()
 	context->getWindowManager()->render(*playButton);
 
 	context->getWindowManager()->render(diagnosticText);
+	context->getWindowManager()->render(ghostText);
+	context->getWindowManager()->render(moveText);
 	context->getWindowManager()->render(modeText);
 
 	context->getWindowManager()->endRender();
@@ -218,13 +247,14 @@ void GameState::updatePlayerPositions(float deltaTime)
 
 	for (Player* otherPlayer : otherPlayers)
 	{
-		otherPlayer->interpolate(deltaTime);
-
 		if (otherPlayer->getPlayerPort() == receivePlayer.port)
 		{
 			otherPlayer->setVelocity(receivePlayer.velX, receivePlayer.velY);
 			otherPlayer->setNextPosition(receivePlayer.nextPosX, receivePlayer.nextPosY);
 		}
+
+		otherPlayer->interpolate(deltaTime);
+		otherPlayer->update(deltaTime);
 	}
 }
 
@@ -284,6 +314,58 @@ void GameState::checkQuit()
 	}
 }
 
+void GameState::updateUI()
+{
+	//Update UI elements
+	if (chatButton->isClicked())
+	{
+		playing = false;
+	}
+
+	if (playButton->isClicked())
+	{
+		playing = true;
+	}
+
+	//Set the text for tick rate and latency values
+	diagnosticText.setString(sf::String("User: P_" + std::to_string(player->getPlayerPort()) + "   Tick Rate: " + std::to_string(tickRate) + "ms   Latency: " + std::to_string((int)latency) + "ms"));
+
+	//Set the game mode text
+	if (playing)
+	{
+		modeText.setString(sf::String("GAME MODE: PLAYING"));
+
+		if (enableGhosts)
+		{
+			ghostText.setString(sf::String("Ghosts: ON"));
+			ghostText.setFillColor(sf::Color::Green);
+		}
+
+		else
+		{
+			ghostText.setString(sf::String("Ghosts: OFF"));
+			ghostText.setFillColor(sf::Color::White);
+		}
+
+		if (player->getConstantMove())
+		{
+			moveText.setString(sf::String("Constant Movement: ON"));
+			moveText.setFillColor(sf::Color::Green);
+		}
+
+		else
+		{
+			moveText.setString(sf::String("Constant Movement: OFF"));
+			moveText.setFillColor(sf::Color::White);
+		}
+	}
+
+	else
+	{
+		modeText.setString(sf::String("GAME MODE: CHATTING"));
+	}
+}
+
 void GameState::updatePlayerCount(sf::Packet& receivedPacket)
 {
 	int clientFlag;
@@ -325,15 +407,16 @@ void GameState::createPlayerInstance(sf::Uint16 port)
 	newPlayer->setPlayerPort(port);
 	newPlayer->setPosition(sf::Vector2f(575.0f, 300.0f));
 	newPlayer->setSize(sf::Vector2f(50.0f, 50.0f));
+	newPlayer->setPlayerTexture("assets/player-sprite.png");
+	newPlayer->createGhost("assets/ghost-sprite.png");
 
-	sf::Texture* playerTexture = new sf::Texture();
+	sf::Text* otherPlayerName = new sf::Text();
+	otherPlayerName->setFont(arial);
+	otherPlayerName->setCharacterSize(24);
+	otherPlayerName->setFillColor(sf::Color::White);
+	otherPlayerName->setString(sf::String("P_" + std::to_string(newPlayer->getPlayerPort())));
 
-	if (!playerTexture->loadFromFile("assets/player-sprite.png"))
-	{
-		std::cout << "could not load texture" << std::endl;
-	}
-
-	newPlayer->setTexture(playerTexture);
+	newPlayer->setNamePlate(otherPlayerName);
 
 	otherPlayers.push_back(newPlayer);
 }

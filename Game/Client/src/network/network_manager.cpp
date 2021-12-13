@@ -25,13 +25,13 @@ sf::Packet operator >> (sf::Packet& packet, ChatData& data)
 	return packet >> data.userName >> data.messageBuffer;
 }
 
-//const sf::IpAddress serverAddress = sf::IpAddress::getLocalAddress();
-const sf::IpAddress serverAddress = "192.168.0.18";
 const sf::Uint16 serverPortTCP = 5555;
 const sf::Uint16 serverPortUDP = 4444;
 
 NetworkManager::NetworkManager()
 {
+	serverAddress = "192.168.0.18";
+
 	socketTCP = new sf::TcpSocket();
 	socketUDP = new sf::UdpSocket();
 
@@ -58,8 +58,10 @@ void NetworkManager::bindUDP()
 	}
 }
 
-bool NetworkManager::requestConnection()
+bool NetworkManager::requestConnection(const sf::String& address)
 {
+	serverAddress = sf::IpAddress(address);
+
 	if(socketTCP->connect(serverAddress, serverPortTCP) != sf::TcpSocket::Done)
 	{
 		std::cout << "FAILED TO CONNECT! - The server is either full or not running" << std::endl;

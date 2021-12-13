@@ -4,6 +4,7 @@
 
 #include "state.h"
 #include "object/ui_button.h"
+#include "input/chat_manager.h"
 
 //The main menu state - allows user to transition to the game state or close the application
 class MenuState : public State
@@ -23,4 +24,8 @@ public:
 private:
 	UIButton* connectButton;
 	UIButton* quitButton;
+
+	ChatManager* chat;
+
+	sf::Text* addressText;
 };

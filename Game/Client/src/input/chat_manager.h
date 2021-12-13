@@ -12,11 +12,13 @@ class ChatManager
 {
 public:
 	ChatManager(InputManager* input);
+	ChatManager(InputManager* input, sf::Text* inputT, const int maxInput);
 	~ChatManager();
 
 	void updateMessageStream(float deltaTime);
 	void addNewMessage(sf::String& name, sf::String& msg);
 
+	inline void setInputMessage(const sf::String& message) { inputMessage = message; }
 	inline sf::Text* getInputText() const { return inputText; }
 	const inline std::vector<sf::Text>& getChatMessages() const { return chatMessages; }
 
@@ -31,4 +33,7 @@ private:
 
 	char last;	//The last character that was inserted into the message stream
 	float delay;	//Timer variable used when client wants to insert a series of duplicate characters
+
+	int MAX_MESSAGES;
+	int MAX_INPUT;
 };

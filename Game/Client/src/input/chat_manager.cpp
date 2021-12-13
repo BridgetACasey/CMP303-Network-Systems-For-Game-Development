@@ -20,6 +20,30 @@ ChatManager::ChatManager(InputManager* input)
 	inputText->setCharacterSize(24);
 	inputText->setFillColor(sf::Color::White);
 	inputText->setPosition(sf::Vector2f(35.0f, 615.0f));
+
+	MAX_MESSAGES = 15;
+
+	MAX_INPUT = 47;
+}
+
+ChatManager::ChatManager(InputManager* input, sf::Text* inputT, const int maxInput)
+{
+	inputManager = input;
+	last = 0;
+	delay = 0.0f;
+
+	if (!arial.loadFromFile("assets/arial.ttf"))
+	{
+		printf("could not load font");
+	}
+
+	inputText = inputT;
+
+	inputText->setFont(arial);
+
+	MAX_MESSAGES = 1;
+
+	MAX_INPUT = maxInput;
 }
 
 ChatManager::~ChatManager()
@@ -38,7 +62,7 @@ void ChatManager::updateMessageStream(float deltaTime)
 		inputMessage.erase(inputMessage.getSize() - 1, 1);
 	}
 
-	if (inputMessage.getSize() > 47)	//Don't update the stream if the character limit has been reached
+	if (inputMessage.getSize() > MAX_INPUT)	//Don't update the stream if the character limit has been reached
 	{
 		return;
 	}
@@ -82,10 +106,10 @@ void ChatManager::addNewMessage(sf::String& name, sf::String& msg)
 	message.setString(sf::String("[" + name + "]: " + msg));	//Format the client's username
 	message.setFont(arial);
 	message.setCharacterSize(24);
-	message.setFillColor(sf::Color(192, 192, 192, 255));
+	message.setFillColor(sf::Color(224, 224, 224, 255));
 	message.setPosition(sf::Vector2f(inputText->getPosition().x, inputText->getPosition().y - 30.0f));	//Display new message above the input box
 
-	if (chatMessages.size() > 18)	//Only 18 text messages should be displayed on the screen at once
+	if (chatMessages.size() >= MAX_MESSAGES)	//Only a certain number of text messages should be displayed on the screen at once
 	{
 		chatMessages.erase(chatMessages.begin());	//Erase the oldest message
 	}

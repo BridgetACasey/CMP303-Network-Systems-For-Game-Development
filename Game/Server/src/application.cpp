@@ -27,8 +27,7 @@ sf::Packet operator >> (sf::Packet& packet, ChatData& data)
 
 const int MAX_CLIENTS = 4;
 
-//const sf::IpAddress serverAddress = sf::IpAddress::getLocalAddress();
-const sf::IpAddress serverAddress = "192.168.0.18";
+const sf::IpAddress serverAddress = sf::IpAddress::getLocalAddress();	//Server address by default is 192.168.0.18 on client side, this information must be given to client outside of the application
 const sf::Uint16 serverPortTCP = 5555;
 const sf::Uint16 serverPortUDP = 4444;
 
@@ -105,8 +104,8 @@ void Application::connectClients()
 					client->setClientUDP(newClientPort);
 					client->setClientAddress(newClientAddress);
 
-					std::cout << "New client has connected on " << client->getClientUDP() << std::endl;
-					std::cout << "Client bound to port " << client->getClientAddress().toString() << std::endl;
+					std::cout << "New client has connected on " << client->getClientAddress().toString() << std::endl;
+					std::cout << "Client bound to port " << client->getClientUDP() << std::endl;
 
 					clients.push_back(client);
 
