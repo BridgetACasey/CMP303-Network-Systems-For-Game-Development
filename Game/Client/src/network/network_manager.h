@@ -17,11 +17,9 @@ public:
 	void bindUDP();
 
 	bool requestConnection(const sf::String& address);
-	bool requestDisconnection();
 
-	bool sendDataTCP(ChatData& chatData);
-	bool receiveDataTCP(ChatData& chatData);
-	bool receiveChatData(ChatData& chatData, sf::Packet& receivedPacket);
+	bool sendDataTCP(ChatData& chatData, int quitFlag, sf::Uint16 playerPort);
+	bool receiveDataTCP(ChatData& chatData, int& quitFlag, sf::Uint16& playerPort);
 
 	bool sendDataUDP(PlayerData& playerData);
 	bool receiveDataUDP(PlayerData& playerData);

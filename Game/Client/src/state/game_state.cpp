@@ -22,6 +22,8 @@ GameState::GameState()
 	running = true;
 
 	enableGhosts = true;
+
+	quitFlag = 0;
 }
 
 GameState::~GameState()
@@ -123,22 +125,32 @@ bool GameState::update(float deltaTime)
 {
 	elapsedTime = (float)getClientTime();
 
-	updateGameState(deltaTime);
+	ChatData sendChat;
+
+	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
+	{
+		context->getInputManager()->setKeyStatus(sf::Keyboard::Key::Escape, InputStatus::NONE);
+
+		quitFlag = -1;
+
+		context->getNetworkManager()->sendDataTCP(sendChat, quitFlag, 0);
+	}
 
 	if (!playing)	//If not controlling an avatar, update the chat's input stream
 	{
 		chatManager->updateMessageStream(deltaTime);
 
-		//Send the message to the server once ENTER has been pressed
-		if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Enter) == InputStatus::PRESSED)
+		if (quitFlag >= 0)
 		{
-			context->getInputManager()->setKeyStatus(sf::Keyboard::Key::Enter, InputStatus::NONE);
+			//Send the message to the server once ENTER has been pressed
+			if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Enter) == InputStatus::PRESSED)
+			{
+				context->getInputManager()->setKeyStatus(sf::Keyboard::Key::Enter, InputStatus::NONE);
 
-			ChatData sendChat;
-			sendChat.userName = "P_" + std::to_string(context->getNetworkManager()->getSocketUDP()->getLocalPort());
-			sendChat.messageBuffer = chatManager->getInputText()->getString();
-
-			context->getNetworkManager()->sendDataTCP(sendChat);
+				sendChat.userName = "P_" + std::to_string(context->getNetworkManager()->getSocketUDP()->getLocalPort());
+				sendChat.messageBuffer = chatManager->getInputText()->getString();
+				context->getNetworkManager()->sendDataTCP(sendChat, 0, 0);
+			}
 		}
 	}
 
@@ -156,9 +168,29 @@ bool GameState::update(float deltaTime)
 		player->setConstantMove(!player->getConstantMove());
 	}
 
-	updatePlayerPositions(deltaTime);
+	ChatData receiveChat;
+	int flag = 0;
+	sf::Uint16 port = 0;
 
-	checkQuit();
+	if (context->getNetworkManager()->receiveDataTCP(receiveChat, flag, port))
+	{
+		if (flag == -2)
+		{
+			running = false;
+		}
+
+		else if (flag == -3 || flag == -4)	//A client has connected to or disconnected from the server, update relevant player data
+		{
+			updatePlayerCount(flag, port);
+		}
+
+		else if (receiveChat.messageBuffer.getSize() > 0)
+		{
+			chatManager->addNewMessage(receiveChat.userName, receiveChat.messageBuffer);
+		}
+	}
+
+	updatePlayerPositions(deltaTime);
 
 	updateUI();
 
@@ -283,19 +315,6 @@ void GameState::updatePlayerPositions(float deltaTime)
 	}
 }
 
-void GameState::updateChatLog(sf::Packet& receivedPacket, float deltaTime)
-{
-	ChatData receiveChat;
-
-	if (context->getNetworkManager()->receiveChatData(receiveChat, receivedPacket))
-	{
-		if (receiveChat.messageBuffer.getSize() > 0)
-		{
-			chatManager->addNewMessage(receiveChat.userName, receiveChat.messageBuffer);
-		}
-	}
-}
-
 //Returns true if it has been more than the specified time since an update was sent to the server
 bool GameState::sendUpdate(float period)
 {
@@ -307,36 +326,6 @@ bool GameState::sendUpdate(float period)
 	}
 
 	return false;
-}
-
-void GameState::updateGameState(float deltaTime)
-{
-	sf::Packet updatePacket;
-
-	if (context->getNetworkManager()->getSocketTCP()->receive(updatePacket) == sf::Socket::Done)
-	{
-		if (updatePacket.getDataSize() == sizeof(int) + sizeof(sf::Uint16))
-		{
-			//A client has connected to or disconnected from the server, update relevant player data
-			updatePlayerCount(updatePacket);
-		}
-
-		else
-		{
-			updateChatLog(updatePacket, deltaTime);
-		}
-	}
-}
-
-void GameState::checkQuit()
-{
-	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
-	{
-		if (context->getNetworkManager()->requestDisconnection())
-		{
-			running = false;
-		}
-	}
 }
 
 void GameState::updateUI()
@@ -391,28 +380,22 @@ void GameState::updateUI()
 	}
 }
 
-void GameState::updatePlayerCount(sf::Packet& receivedPacket)
+void GameState::updatePlayerCount(int clientFlag, sf::Uint16 clientPort)
 {
-	int clientFlag;
-	sf::Uint16 clientPort;
-
-	if (receivedPacket >> clientFlag >> clientPort)
+	if (clientPort != player->getPlayerPort())
 	{
-		if (clientPort != player->getPlayerPort())
+		if (clientFlag == -3)
 		{
-			if (clientFlag == -1)
-			{
-				createPlayerInstance(clientPort);
-			}
-
-			else if (clientFlag == -2)
-			{
-				removePlayerInstance(clientPort);
-			}
-			
-			//Update tick rate to accommodate for how many clients are connected to the server
-			tickRate = 1000.0f / (64.0f / (1 + otherPlayers.size()));
+			createPlayerInstance(clientPort);
 		}
+
+		else if (clientFlag == -4)
+		{
+			removePlayerInstance(clientPort);
+		}
+			
+		//Update tick rate to accommodate for how many clients are connected to the server
+		tickRate = 1000.0f / (64.0f / (1 + otherPlayers.size()));
 	}
 }
 

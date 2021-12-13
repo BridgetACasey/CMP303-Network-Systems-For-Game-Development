@@ -111,7 +111,7 @@ void Application::connectClients()
 
 					selector.add(*clientTCP);
 
-					int clientFlag = -1;	//Send a flag to the clients to determine what to do next: -1 for creating new player instances
+					int clientFlag = -3;	//Send a flag to the clients to determine what to do next: -3 for creating new player instances
 					sf::Uint16 clientPort = 0;	//Let the current client know what ports the others are bound to - this is then used as a type of id
 
 					//Inform newly connected client of other clients on server
@@ -161,7 +161,7 @@ void Application::connectClients()
 void Application::disconnectClients(sf::Packet& receivedPacket, unsigned int id)
 {
 	int quit;
-	int clientFlag = -2;	//Flag value of -2 means a player instance needs to be removed, as the client has disconnected
+	int clientFlag = -4;	//Flag value of -4 means a player instance needs to be removed, as the client has disconnected
 	sf::Uint16 clientPort = clients.at(id)->getClientUDP();
 
 	if (receivedPacket >> quit)

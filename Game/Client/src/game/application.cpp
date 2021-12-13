@@ -38,7 +38,6 @@ void Application::run()
 		{
 			if (event.type == sf::Event::Closed)
 			{
-				networkManager->requestDisconnection();
 				windowManager->getWindow()->close();
 				running = false;
 			}

@@ -33,6 +33,7 @@ private:
 	std::vector<PlayerData> playerPackets;
 	int clientID;	//Value ranging from 0 to 3 - the index of the client
 	sf::TcpSocket* clientTCP;
+	sf::TcpSocket* connectionTCP;
 	sf::Uint16 clientUDP;	//The UDP port that the client has bound themselves to
 	sf::IpAddress clientAddress;
 };

@@ -23,16 +23,12 @@ public:
 
 private:
 	inline int getClientTime() const { return clientClock.getElapsedTime().asMilliseconds(); }
-	
-	void updateGameState(float deltaTime);
-	void checkQuit();
+
 	void updateUI();
-	void updatePlayerCount(sf::Packet& receivedPacket);
+	void updatePlayerCount(int clientFlag, sf::Uint16 clientPort);
 	void createPlayerInstance(sf::Uint16 port);
 	void removePlayerInstance(sf::Uint16 port);
 	void updatePlayerPositions(float deltaTime);
-
-	void updateChatLog(sf::Packet& receivedPacket, float deltaTime);
 	
 	bool sendUpdate(float period);
 
@@ -65,4 +61,6 @@ private:
 
 	float tickRate;	//The variable rate at which updates are being sent to the server
 	float latency;
+
+	int quitFlag;
 };
