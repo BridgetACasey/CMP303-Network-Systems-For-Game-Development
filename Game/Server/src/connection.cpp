@@ -25,17 +25,50 @@ Connection::~Connection()
 	}
 }
 
-void Connection::insertPacket(PlayerData& data)
+bool Connection::validatePositions(PlayerData& data)
 {
-	if (playerPackets.size() > 1)	//Checking vector size - only want to store two packets at a time
+	if (playerPackets.size() > 1)
 	{
-		playerPackets.erase(playerPackets.begin());
+		float offset = 150.0f;
+
+		//Position data received was technically valid but unrealistic, recalculate next position
+		float lastDisX = abs(playerPackets.at(1).nextPosX - playerPackets.at(1).posX);
+		float lastDisY = abs(playerPackets.at(1).nextPosY - playerPackets.at(1).posY);
+		float newDisX = abs(data.nextPosX - data.posX);
+		float newDisY = abs(data.nextPosY - data.posY);
+
+		if (newDisX > (lastDisX + offset))
+		{
+			data.nextPosX = playerPackets.at(1).posX;
+		}
+
+		if (newDisY > (lastDisY + offset))
+		{
+			data.nextPosY = playerPackets.at(1).posY;
+		}
 	}
 
-	playerPackets.push_back(data);
+	return true;
+}
 
-	//Reordering packets based on time received - mitigates problems related to receiving packets out of order
-	std::sort(playerPackets.begin(), playerPackets.end(), reorder());
+bool Connection::insertPacket(PlayerData& data)
+{
+	if (validatePositions(data))
+	{
+		if (playerPackets.size() > 1)	//Checking vector size - only want to store two packets at a time
+		{
+			playerPackets.erase(playerPackets.begin());
+		}
+
+		playerPackets.push_back(data);
+
+		//Reordering packets based on time received - mitigates problems related to receiving packets out of order
+		std::sort(playerPackets.begin(), playerPackets.end(), reorder());
+
+		return true;
+	}
+
+	return false;
 }
 
 void Connection::predictMovement()
@@ -58,6 +91,9 @@ void Connection::predictMovement()
 
 	playerPackets.at(1).velX = vX;
 	playerPackets.at(1).velY = vY;
+
+	playerPackets.at(1).disX = dX;
+	playerPackets.at(1).disY = dY;
 
 	//Determine the predicted next position and send it back to clients
 	playerPackets.at(1).nextPosX = playerPackets.at(1).posX + dX;

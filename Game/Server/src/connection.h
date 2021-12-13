@@ -12,7 +12,8 @@ public:
 	Connection(int id, sf::TcpSocket* tcp);
 	~Connection();
 
-	void insertPacket(PlayerData& data);
+	bool validatePositions(PlayerData& data);
+	bool insertPacket(PlayerData& data);
 	void predictMovement();
 
 	std::vector<PlayerData>& getPlayerPackets() { return playerPackets; }

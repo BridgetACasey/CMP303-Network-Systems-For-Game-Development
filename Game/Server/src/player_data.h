@@ -9,4 +9,5 @@ struct PlayerData
 	float posX, posY;
 	float nextPosX, nextPosY;
 	float velX, velY;
+	float disX, disY;
 };

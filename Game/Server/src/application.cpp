@@ -7,12 +7,12 @@
 //Operator overloads for reading and writing between packets and frequently used struct types
 sf::Packet operator << (sf::Packet& packet, const PlayerData& data)
 {
-	return packet << data.time << data.port << data.posX << data.posY << data.nextPosX << data.nextPosY << data.velX << data.velY;
+	return packet << data.time << data.port << data.posX << data.posY << data.nextPosX << data.nextPosY << data.velX << data.velY << data.disX << data.disY;
 }
 
 sf::Packet operator >> (sf::Packet& packet, PlayerData& data)
 {
-	return packet >> data.time >> data.port >> data.posX >> data.posY >> data.nextPosX >> data.nextPosY >> data.velX >> data.velY;
+	return packet >> data.time >> data.port >> data.posX >> data.posY >> data.nextPosX >> data.nextPosY >> data.velX >> data.velY >> data.disX >> data.disY;
 }
 
 sf::Packet operator << (sf::Packet& packet, const ChatData& data)
@@ -329,8 +329,11 @@ void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& ad
 					}
 				}
 
-				client->insertPacket(playerData);
-				client->predictMovement();
+				if (client->insertPacket(playerData))
+				{
+					client->predictMovement();
+				}
+
 				playerData = client->getPlayerPackets().back();	//Grab the last packet after prediction has been calculated
 			}
 		}
@@ -358,6 +361,22 @@ bool Application::validateData(ChatData& chatData)
 		return false;
 	if (chatData.messageBuffer.getSize() > 48)
 		return false;
+
+	for (char n : chatData.userName)
+	{
+		if (n < 31 || n > 127)
+		{
+			return false;
+		}
+	}
+
+	for (char msg : chatData.messageBuffer)
+	{
+		if (msg < 31 || msg > 127)
+		{
+			return false;
+		}
+	}
 
 	return true;
 }

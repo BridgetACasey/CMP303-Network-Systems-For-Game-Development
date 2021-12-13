@@ -7,12 +7,12 @@
 //Operator overloads for reading and writing between packets and frequently used struct types
 sf::Packet operator << (sf::Packet& packet, const PlayerData& data)
 {
-	return packet << data.time << data.port << data.posX << data.posY << data.nextPosX << data.nextPosY << data.velX << data.velY;
+	return packet << data.time << data.port << data.posX << data.posY << data.nextPosX << data.nextPosY << data.velX << data.velY << data.disX << data.disY;
 }
 
 sf::Packet operator >> (sf::Packet& packet, PlayerData& data)
 {
-	return packet >> data.time >> data.port >> data.posX >> data.posY >> data.nextPosX >> data.nextPosY >> data.velX >> data.velY;
+	return packet >> data.time >> data.port >> data.posX >> data.posY >> data.nextPosX >> data.nextPosY >> data.velX >> data.velY >> data.disX >> data.disY;
 }
 
 sf::Packet operator << (sf::Packet& packet, const ChatData& data)
@@ -300,15 +300,33 @@ bool NetworkManager::validateData(ChatData& chatData)
 	if (chatData.messageBuffer.getSize() > 48)
 		return false;
 
+	for (char n : chatData.userName)
+	{
+		if (n < 31 || n > 127)
+		{
+			return false;
+		}
+	}
+
+	for (char msg : chatData.messageBuffer)
+	{
+		if (msg < 31 || msg > 127)
+		{
+			return false;
+		}
+	}
+
 	return true;
 }
 
 //Checking that received packets contain sensible data, otherwise they have likely been tampered with
 bool NetworkManager::validateData(PlayerData& playerData)
 {
-	if (playerData.port < 0 || playerData.port > 65535)
-		return false;
+	int playerIndex = -1;
+
 	if (playerData.time < 0.0f)
+		return false;
+	if (playerData.port < 0 || playerData.port > 65535)
 		return false;
 	if (playerData.posX < -5.0f || playerData.posX > 1200.0f)
 		return false;
@@ -322,6 +340,51 @@ bool NetworkManager::validateData(PlayerData& playerData)
 		return false;
 	if (playerData.velY < -300.0f || playerData.velY > 300.0f)
 		return false;
+	if (playerData.disX < -300.0f || playerData.disX > 300.0f)
+		return false;
+	if (playerData.disY < -300.0f || playerData.disY > 300.0f)
+		return false;
+
+	for (int i = 0; i < previousPlayerData.size(); i++)
+	{
+		if (previousPlayerData.at(i).port == playerData.port)
+		{
+			playerIndex = i;
+
+			if (playerData.disX != 0.0f && playerData.disY != 0.0f)
+			{
+				float offset = 150.0f;
+
+				//Position data received was technically valid but unrealistic, recalculate next position
+				float lastDisX = abs(previousPlayerData.at(i).nextPosX - previousPlayerData.at(i).posX);
+				float lastDisY = abs(previousPlayerData.at(i).nextPosY - previousPlayerData.at(i).posY);
+				float newDisX = abs(playerData.nextPosX - playerData.posX);
+				float newDisY = abs(playerData.nextPosY - playerData.posY);
+
+				if (newDisX > (lastDisX + abs(playerData.disX) + offset))
+				{
+					playerData.nextPosX = previousPlayerData.at(i).nextPosX;
+				}
+
+				if (newDisY > (lastDisY + abs(playerData.disY) + offset))
+				{
+					playerData.nextPosY = previousPlayerData.at(i).nextPosY;
+				}
+			}
+		}
+	}
+
+	if (playerIndex == -1)
+	{
+		return false;
+	}
+
+	previousPlayerData.at(playerIndex) = playerData;
 
 	return true;
+}
+
+void NetworkManager::insertPlayerData(PlayerData& playerData)
+{
+	previousPlayerData.push_back(playerData);
 }

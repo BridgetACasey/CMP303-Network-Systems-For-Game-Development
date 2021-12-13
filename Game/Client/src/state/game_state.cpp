@@ -38,6 +38,7 @@ void GameState::setup()
 	//Set the player's form of ID to the current UDP port
 	player->setPlayerPort(context->getNetworkManager()->getSocketUDP()->getLocalPort());
 	player->setPosition(sf::Vector2f(575.0f, 300.0f));
+	player->setNextPosition(575.0f, 300.0f);
 	player->setSize(sf::Vector2f(50.0f, 50.0f));
 	player->setPlayerTexture("assets/player-sprite.png");
 
@@ -49,6 +50,21 @@ void GameState::setup()
 
 	player->setNamePlate(playerName);
 	player->setActivePlayer(true);
+
+	PlayerData data;
+
+	data.time = elapsedTime;
+	data.port = player->getPlayerPort();
+	data.posX = player->getPosition().x;
+	data.posY = player->getPosition().y;
+	data.nextPosX = player->getNextPosition().x;
+	data.nextPosY = player->getNextPosition().y;
+	data.velX = player->getVelocity().x;
+	data.velY = player->getVelocity().y;
+	data.disX = 0.0f;
+	data.disY = 0.0f;
+
+	context->getNetworkManager()->insertPlayerData(data);
 
 	chatBar = new GameObject();
 	chatBar->setFillColor(sf::Color(0, 0, 0, 64));
@@ -121,6 +137,7 @@ bool GameState::update(float deltaTime)
 			ChatData sendChat;
 			sendChat.userName = "P_" + std::to_string(context->getNetworkManager()->getSocketUDP()->getLocalPort());
 			sendChat.messageBuffer = chatManager->getInputText()->getString();
+
 			context->getNetworkManager()->sendDataTCP(sendChat);
 		}
 	}
@@ -212,6 +229,12 @@ void GameState::updatePlayerPositions(float deltaTime)
 	player->checkBounds((float)context->getWindowManager()->getWindow()->getSize().x, (float)context->getWindowManager()->getWindow()->getSize().y);
 	player->update(deltaTime);
 
+	for (Player* otherPlayer : otherPlayers)
+	{
+		otherPlayer->interpolate(deltaTime);
+		otherPlayer->update(deltaTime);
+	}
+
 	if (playing)	//If in 'play' mode, listen for keyboard input from the user
 	{
 		player->getUserInput();
@@ -230,6 +253,8 @@ void GameState::updatePlayerPositions(float deltaTime)
 		playerData.nextPosY = player->getNextPosition().y;
 		playerData.velX = player->getVelocity().x;
 		playerData.velY = player->getVelocity().y;
+		playerData.disX = 0.0f;
+		playerData.disY = 0.0f;
 
 		context->getNetworkManager()->sendDataUDP(playerData);
 	}
@@ -243,18 +268,18 @@ void GameState::updatePlayerPositions(float deltaTime)
 		{
 			latency = (elapsedTime - receivePlayer.time);
 		}
-	}
 
-	for (Player* otherPlayer : otherPlayers)
-	{
-		if (otherPlayer->getPlayerPort() == receivePlayer.port)
+		else
 		{
-			otherPlayer->setVelocity(receivePlayer.velX, receivePlayer.velY);
-			otherPlayer->setNextPosition(receivePlayer.nextPosX, receivePlayer.nextPosY);
+			for (Player* otherPlayer : otherPlayers)
+			{
+				if (otherPlayer->getPlayerPort() == receivePlayer.port)
+				{
+					otherPlayer->setVelocity(receivePlayer.velX, receivePlayer.velY);
+					otherPlayer->setNextPosition(receivePlayer.nextPosX, receivePlayer.nextPosY);
+				}
+			}
 		}
-
-		otherPlayer->interpolate(deltaTime);
-		otherPlayer->update(deltaTime);
 	}
 }
 
@@ -417,6 +442,21 @@ void GameState::createPlayerInstance(sf::Uint16 port)
 	otherPlayerName->setString(sf::String("P_" + std::to_string(newPlayer->getPlayerPort())));
 
 	newPlayer->setNamePlate(otherPlayerName);
+
+	PlayerData data;
+
+	data.time = 1.0f;
+	data.port = port;
+	data.posX = newPlayer->getPosition().x;
+	data.posY = newPlayer->getPosition().y;
+	data.nextPosX = 0.0f;
+	data.nextPosY = 0.0f;
+	data.velX = newPlayer->getVelocity().x;
+	data.velY = newPlayer->getVelocity().y;
+	data.disX = 0.0f;
+	data.disY = 0.0f;
+
+	context->getNetworkManager()->insertPlayerData(data);
 
 	otherPlayers.push_back(newPlayer);
 }
