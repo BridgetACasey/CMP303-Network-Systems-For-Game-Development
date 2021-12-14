@@ -28,6 +28,7 @@ public:
 	bool validateData(PlayerData& playerData);
 
 	void insertPlayerData(PlayerData& playerData);
+	bool insertChatData(ChatData& chatData);
 
 	inline sf::TcpSocket* getSocketTCP() const { return socketTCP; }
 	inline sf::UdpSocket* getSocketUDP() const { return socketUDP; }
@@ -43,5 +44,6 @@ private:
 	ChatData pendingChatData;
 	PlayerData pendingPlayerData;
 
+	std::vector<ChatData> previousChatData;
 	std::vector<PlayerData> previousPlayerData;
 };

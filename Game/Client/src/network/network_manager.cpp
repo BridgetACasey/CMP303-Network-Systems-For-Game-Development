@@ -173,8 +173,11 @@ bool NetworkManager::receiveDataTCP(ChatData& chatData, int& quitFlag, sf::Uint1
 			{
 				if (validateData(chatData))
 				{
-					std::cout << "(TCP) RECEIVED packet successfully - contains CHAT DATA: [" << chatData.userName.toAnsiString() << ": " << chatData.messageBuffer.toAnsiString() << "]" << std::endl;
-					status = true;
+					if (insertChatData(chatData))
+					{
+						std::cout << "(TCP) RECEIVED packet successfully - contains CHAT DATA: [" << chatData.userName.toAnsiString() << ": " << chatData.messageBuffer.toAnsiString() << "]" << std::endl;
+						status = true;
+					}
 				}
 			}
 		}
@@ -391,4 +394,19 @@ bool NetworkManager::validateData(PlayerData& playerData)
 void NetworkManager::insertPlayerData(PlayerData& playerData)
 {
 	previousPlayerData.push_back(playerData);
+}
+
+bool NetworkManager::insertChatData(ChatData& chatData)
+{
+	for (ChatData& chat : previousChatData)
+	{
+		if (chat.time == chatData.time)
+		{
+			return false;
+		}
+	}
+
+	previousChatData.push_back(chatData);
+
+	return true;
 }
