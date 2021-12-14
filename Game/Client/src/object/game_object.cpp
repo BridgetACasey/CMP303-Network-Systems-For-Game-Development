@@ -26,7 +26,7 @@ const void GameObject::update(float deltaTime)
 
 const void GameObject::interpolate(float deltaTime)
 {
-	//Linerally interpolate between the current position and the next predicted position
+	//Linerally interpolate halfway between the current position and the next predicted position
 	float posX = linearLerp(getPosition().x, nextPosition.x, 0.5f);
 	float posY = linearLerp(getPosition().y, nextPosition.y, 0.5f);
 

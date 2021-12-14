@@ -62,6 +62,7 @@ bool NetworkManager::requestConnection(const sf::String& address)
 {
 	serverAddress = sf::IpAddress(address);
 
+	//Connect to server via TCP
 	if(socketTCP->connect(serverAddress, serverPortTCP) != sf::TcpSocket::Done)
 	{
 		std::cout << "FAILED TO CONNECT! - The server is either full or not running" << std::endl;
@@ -190,6 +191,7 @@ bool NetworkManager::receiveDataTCP(ChatData& chatData, int& quitFlag, sf::Uint1
 	case sf::Socket::Partial:
 		std::cout << "(TCP) PARTIAL packet received" << std::endl;
 
+		//Append partial data to a temporary container until all packets have been received
 		packet >> pendingChatData;
 
 		if (sizeof(pendingChatData) + packet.getDataSize() == sizeof(ChatData))
@@ -400,6 +402,7 @@ bool NetworkManager::insertChatData(ChatData& chatData)
 {
 	for (ChatData& chat : previousChatData)
 	{
+		//Checking that the current data hasn't already been received
 		if (chat.time == chatData.time)
 		{
 			return false;
