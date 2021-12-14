@@ -181,7 +181,7 @@ bool NetworkManager::receiveDataTCP(ChatData& chatData, int& quitFlag, sf::Uint1
 		break;
 
 	case sf::Socket::NotReady:
-		std::cout << "(TCP) Socket NOT READY to receive packet" << std::endl;
+		//std::cout << "(TCP) Socket NOT READY to receive packet" << std::endl;
 		break;
 
 	case sf::Socket::Partial:
@@ -263,7 +263,7 @@ bool NetworkManager::receiveDataUDP(PlayerData& playerData)
 		break;
 
 	case sf::Socket::NotReady:
-		std::cout << "(UDP) Socket NOT READY to receive packet" << std::endl;
+		//std::cout << "(UDP) Socket NOT READY to receive packet" << std::endl;
 		break;
 
 	case sf::Socket::Error:

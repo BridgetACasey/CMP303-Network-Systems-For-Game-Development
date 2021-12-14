@@ -3,6 +3,8 @@
 #include "context.h"
 #include "game_state.h"
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 
 GameState::GameState()
 {
@@ -291,8 +293,11 @@ void GameState::render()
 		context->getWindowManager()->render(text);
 	}
 
-	context->getWindowManager()->render(*chatBar);
-	context->getWindowManager()->render(*chatManager->getInputText());
+	if (!playing)
+	{
+		context->getWindowManager()->render(*chatBar);
+		context->getWindowManager()->render(*chatManager->getInputText());
+	}
 
 	//Render other UI elements
 	context->getWindowManager()->render(*chatButton);
@@ -437,7 +442,9 @@ void GameState::updateUI()
 	}
 
 	//Set the text for tick rate and latency values
-	diagnosticText.setString(sf::String("User: P_" + std::to_string(player->getPlayerPort()) + "  |  IP: " + sf::IpAddress::getLocalAddress().toString() + "  |  Tick Rate: " + std::to_string(tickRate) + "ms  |  Latency: " + std::to_string((int)latency) + "ms"));
+	std::ostringstream tick;
+	tick << std::setprecision(3) << std::fixed << tickRate;
+	diagnosticText.setString(sf::String("User: P_" + std::to_string(player->getPlayerPort()) + "  |  IP: " + sf::IpAddress::getLocalAddress().toString() + "  |  Tick Rate: " + tick.str() + "ms  |  Latency: " + std::to_string((int)latency) + "ms"));
 
 	//Set the game mode text
 	if (playing)
