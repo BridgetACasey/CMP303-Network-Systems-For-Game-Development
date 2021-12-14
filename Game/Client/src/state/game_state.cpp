@@ -259,6 +259,8 @@ void GameState::render()
 	{
 		if (otherPlayer)
 		{
+			context->getWindowManager()->render(*otherPlayer);
+
 			if (enableGhosts)
 			{
 				if (otherPlayer->getGhost())
@@ -271,8 +273,6 @@ void GameState::render()
 			{
 				context->getWindowManager()->render(*otherPlayer->getNamePlate());
 			}
-
-			context->getWindowManager()->render(*otherPlayer);
 		}
 	}
 

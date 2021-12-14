@@ -55,7 +55,6 @@ const void Player::update(float deltaTime)
 
 	if (ghost)
 	{
-		//ghost->setPosition(nextPosition.x + (velocity.x * deltaTime), nextPosition.y + (velocity.y * deltaTime));
 		ghost->setPosition(nextPosition.x, nextPosition.y);
 	}
 
@@ -81,28 +80,24 @@ void Player::getUserInput()
 		//Altering the player's velocity based on which key has been pressed
 		if (inputManager->getKeyStatus(sf::Keyboard::Key::W) == InputStatus::PRESSED)
 		{
-			inputManager->setKeyStatus(sf::Keyboard::Key::W, InputStatus::NONE);
 			velocity.y = -speed;
 			keysPressed++;
 		}
 		
 		if (inputManager->getKeyStatus(sf::Keyboard::Key::A) == InputStatus::PRESSED)
 		{
-			inputManager->setKeyStatus(sf::Keyboard::Key::A, InputStatus::NONE);
 			velocity.x = -speed;
 			keysPressed++;
 		}
 		
 		if (inputManager->getKeyStatus(sf::Keyboard::Key::S) == InputStatus::PRESSED)
 		{
-			inputManager->setKeyStatus(sf::Keyboard::Key::S, InputStatus::NONE);
 			velocity.y = speed;
 			keysPressed++;
 		}
 		
 		if (inputManager->getKeyStatus(sf::Keyboard::Key::D) == InputStatus::PRESSED)
 		{
-			inputManager->setKeyStatus(sf::Keyboard::Key::D, InputStatus::NONE);
 			velocity.x = speed;
 			keysPressed++;
 		}
