@@ -94,23 +94,31 @@ void GameState::setup()
 	diagnosticText.setFont(arial);
 	diagnosticText.setCharacterSize(24);
 	diagnosticText.setFillColor(sf::Color::White);
+	diagnosticText.setOutlineThickness(1.0f);
+	diagnosticText.setOutlineColor(sf::Color::Black);
 	diagnosticText.setPosition(sf::Vector2f(25.0f, 25.0f));
 
 	ghostText.setFont(arial);
 	ghostText.setCharacterSize(24);
 	ghostText.setFillColor(sf::Color::White);
-	ghostText.setPosition(sf::Vector2f(25.0f, 55.0f));
+	ghostText.setOutlineThickness(1.5f);
+	ghostText.setOutlineColor(sf::Color::Black);
+	ghostText.setPosition(sf::Vector2f(25.0f, 57.5f));
 
 	moveText.setFont(arial);
 	moveText.setCharacterSize(24);
 	moveText.setFillColor(sf::Color::White);
-	moveText.setPosition(sf::Vector2f(185.0f, 55.0f));
+	moveText.setOutlineThickness(1.5f);
+	moveText.setOutlineColor(sf::Color::Black);
+	moveText.setPosition(sf::Vector2f(185.0f, 57.5f));
 
 	modeText.setFont(arial);
 	modeText.setStyle(sf::Text::Bold);
 	modeText.setCharacterSize(24);
 	modeText.setFillColor(sf::Color::White);
-	modeText.setPosition(sf::Vector2f(25.0f, 85.0f));
+	modeText.setOutlineThickness(2.0f);
+	modeText.setOutlineColor(sf::Color::Black);
+	modeText.setPosition(sf::Vector2f(25.0f, 90.0f));
 }
 
 void GameState::onEnter()
@@ -130,31 +138,36 @@ bool GameState::update(float deltaTime)
 {
 	elapsedTime += (1000.0f * deltaTime);
 
-	if (playing)
+	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
 	{
-		if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
-		{
-			context->getInputManager()->setKeyStatus(sf::Keyboard::Key::Escape, InputStatus::NONE);
+		context->getInputManager()->setKeyStatus(sf::Keyboard::Key::Escape, InputStatus::NONE);
 
+		if (playing)
+		{
 			quitFlag = -1;
 
-			if (context->getNetworkManager()->sendDataTCP(pendingChat, quitFlag, 0))
+			if (context->getNetworkManager()->sendDataTCP(pendingChat, quitFlag))
 			{
 				waitQuit = true;
 			}
 		}
+
+		else
+		{
+			std::cout << "You can only disconnect from the server while in PLAY mode" << std::endl;
+		}
 	}
 
-	else if (!playing)	//If not controlling an avatar, update the chat's input stream
+	if (!playing)	//If not controlling an avatar, update the chat's input stream
 	{
 		if (quitFlag >= 0)
 		{
 			if (waitChat)
 			{
-				if (checkChatTimeout(5000.0f))
+				if (checkChatTimeout(2000.0f))
 				{
 					std::cout << "Took too long to send - resending chat data packet" << std::endl;
-					context->getNetworkManager()->sendDataTCP(pendingChat, 0, 0);
+					context->getNetworkManager()->sendDataTCP(pendingChat, 0);
 				}
 			}
 
@@ -171,10 +184,13 @@ bool GameState::update(float deltaTime)
 					pendingChat.userName = "P_" + std::to_string(context->getNetworkManager()->getSocketUDP()->getLocalPort());
 					pendingChat.messageBuffer = chatManager->getInputText()->getString();
 
-					if (context->getNetworkManager()->sendDataTCP(pendingChat, 0, 0))
+					if (pendingChat.messageBuffer.getSize() > 0)
 					{
-						waitChat = true;
-						chatTimeout = elapsedTime;
+						if (context->getNetworkManager()->sendDataTCP(pendingChat, 0))
+						{
+							waitChat = true;
+							chatTimeout = elapsedTime;
+						}
 					}
 				}
 			}
@@ -292,6 +308,12 @@ void GameState::render()
 
 void GameState::updatePlayerPositions(float deltaTime)
 {
+	//If in 'play' mode, listen for keyboard input from the user
+	if (playing)
+	{
+		player->getUserInput();
+	}
+	
 	//Update active player position
 	player->checkBounds((float)context->getWindowManager()->getWindow()->getSize().x, (float)context->getWindowManager()->getWindow()->getSize().y);
 	player->update(deltaTime);
@@ -300,27 +322,14 @@ void GameState::updatePlayerPositions(float deltaTime)
 
 	for (Player* otherPlayer : otherPlayers)
 	{
+		otherPlayer->setElapsedTime(elapsedTime);
+		otherPlayer->interpolate(deltaTime);
+		otherPlayer->update(deltaTime);
+
 		if (otherPlayer->getTimeout())
 		{
 			playerTimeouts.push_back(otherPlayer->getPlayerPort());
 		}
-
-		otherPlayer->setElapsedTime(elapsedTime);
-		otherPlayer->interpolate(deltaTime);
-		otherPlayer->update(deltaTime);
-	}
-
-	if (playerTimeouts.size() > 0)
-	{
-		for (sf::Uint16 port : playerTimeouts)
-		{
-			removePlayerInstance(port);
-		}
-	}
-
-	if (playing)	//If in 'play' mode, listen for keyboard input from the user
-	{
-		player->getUserInput();
 	}
 
 	if (checkSendUpdate(tickRate))
@@ -363,6 +372,16 @@ void GameState::updatePlayerPositions(float deltaTime)
 					otherPlayer->setNextPosition(receivePlayer.nextPosX, receivePlayer.nextPosY);
 				}
 			}
+		}
+	}
+
+	//Remove instances of players whose connections have dropped or have taken too long to send a new packet
+	if (playerTimeouts.size() > 0)
+	{
+		for (sf::Uint16 port : playerTimeouts)
+		{
+			std::cout << "Client " << std::to_string(port) << " timed out! Removing player instance..." << std::endl;
+			removePlayerInstance(port);
 		}
 	}
 }
@@ -418,7 +437,7 @@ void GameState::updateUI()
 	}
 
 	//Set the text for tick rate and latency values
-	diagnosticText.setString(sf::String("User: P_" + std::to_string(player->getPlayerPort()) + "   Tick Rate: " + std::to_string(tickRate) + "ms   Latency: " + std::to_string((int)latency) + "ms"));
+	diagnosticText.setString(sf::String("User: P_" + std::to_string(player->getPlayerPort()) + "  |  IP: " + sf::IpAddress::getLocalAddress().toString() + "  |  Tick Rate: " + std::to_string(tickRate) + "ms  |  Latency: " + std::to_string((int)latency) + "ms"));
 
 	//Set the game mode text
 	if (playing)
@@ -463,11 +482,13 @@ void GameState::updatePlayerCount(int clientFlag, sf::Uint16 clientPort)
 		if (clientFlag == -3)
 		{
 			createPlayerInstance(clientPort);
+			std::cout << "New user has CONNECTED on port " << std::to_string(clientPort) << std::endl;
 		}
 
 		else if (clientFlag == -4)
 		{
 			removePlayerInstance(clientPort);
+			std::cout << "User " << std::to_string(clientPort) << " has DISCONNECTED from the server" << std::endl;
 		}
 			
 		//Update tick rate to accommodate for how many clients are connected to the server
@@ -493,6 +514,8 @@ void GameState::createPlayerInstance(sf::Uint16 port)
 	newPlayer->setSize(sf::Vector2f(50.0f, 50.0f));
 	newPlayer->setPlayerTexture("assets/player-sprite.png");
 	newPlayer->createGhost("assets/ghost-sprite.png");
+	newPlayer->setElapsedTime(elapsedTime);
+	newPlayer->setLastUpdateTime(elapsedTime);
 
 	sf::Text* otherPlayerName = new sf::Text();
 	otherPlayerName->setFont(arial);

@@ -18,7 +18,7 @@ public:
 
 	bool requestConnection(const sf::String& address);
 
-	bool sendDataTCP(ChatData& chatData, int quitFlag, sf::Uint16 playerPort);
+	bool sendDataTCP(ChatData& chatData, int quitFlag);
 	bool receiveDataTCP(ChatData& chatData, int& quitFlag, sf::Uint16& playerPort);
 
 	bool sendDataUDP(PlayerData& playerData);

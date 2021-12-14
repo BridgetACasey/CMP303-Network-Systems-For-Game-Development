@@ -22,9 +22,10 @@ public:
 
 private:	
 	void connectClients();
-	void disconnectClients();
 	void disconnectClients(sf::Packet& receivedPacket, unsigned int id);
 	void eraseClients(int clientID, int clientFlag, sf::Uint16 clientPort);
+	void verifyClients(int clientFlag, Connection* client);
+	void checkClientTimeouts();
 
 	void handleDataTCP();
 	void handleDataUDP();

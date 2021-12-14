@@ -50,20 +50,20 @@ private:
 	InputManager* inputManager;
 
 	sf::Vector2f velocity;
-	float speed;	//The initial movement speed assigned when the player begins moving in a new direction
+	float speed;	//The initial movement speed assigned when the player begins moving in a new direction, used to calculate velocity
 
 	sf::Uint16 playerPort;	//The UDP port to which the respective client is bound, used as a type of ID
 
-	GameObject* ghost;
+	GameObject* ghost;	//Object rendered at the predicted next position, only appears for non-active player instances
 
 	sf::Text* namePlate;
 
 	bool activePlayer;
 
-	bool constantMove;
+	bool constantMove;	//To check if the player should stop moving once the WASD keys are released, or continue in the same direction
 
-	float elapsedTime;	//The total elapsed time in ms since connecting to the server and entering the game state
-	float lastUpdateTime;	//The time at which a packet was last sent to the server
+	float elapsedTime;	//The total elapsed time in ms since this player connected to the server
+	float lastUpdateTime;	//The time at which a packet was last received from the server for this specific player
 
 	bool timeout;
 };

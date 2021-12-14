@@ -88,7 +88,7 @@ bool NetworkManager::requestConnection(const sf::String& address)
 	return false;
 }
 
-bool NetworkManager::sendDataTCP(ChatData& chatData, int quitFlag, sf::Uint16 playerPort)
+bool NetworkManager::sendDataTCP(ChatData& chatData, int quitFlag)
 {
 	bool status = false;
 
@@ -98,7 +98,7 @@ bool NetworkManager::sendDataTCP(ChatData& chatData, int quitFlag, sf::Uint16 pl
 	{
 		if (packet << quitFlag)
 		{
-			std::cout << "(TCP) PACKED data successfully - Request to quit" << std::endl;
+			std::cout << "(TCP) PACKED data successfully - contains QUIT FLAG" << std::endl;
 		}
 	}
 
@@ -106,7 +106,7 @@ bool NetworkManager::sendDataTCP(ChatData& chatData, int quitFlag, sf::Uint16 pl
 	{
 		if (packet << chatData)
 		{
-			std::cout << "(TCP) PACKED data successfully - Chat message" << std::endl;
+			std::cout << "(TCP) PACKED data successfully - contains CHAT DATA: [" << chatData.userName.toAnsiString() << ": " << chatData.messageBuffer.toAnsiString() << "]" << std::endl;
 		}
 	}
 
@@ -115,17 +115,13 @@ bool NetworkManager::sendDataTCP(ChatData& chatData, int quitFlag, sf::Uint16 pl
 	switch (socketStatus)
 	{
 	case sf::Socket::Done:
-		std::cout << "(TCP) SENT packet successfully" << std::endl;
+		std::cout << "(TCP) SENT packet successfully to server" << std::endl;
 
 		status = true;
 		break;
 
-	case sf::Socket::Partial:
-		std::cout << "(TCP) PARTIAL packet sent" << std::endl;
-		break;
-
 	case sf::Socket::Error:
-		std::cout << "(TCP) ERROR sending packet" << std::endl;
+		std::cout << "(TCP) ERROR sending packet to server" << std::endl;
 		break;
 
 	default:
@@ -146,13 +142,13 @@ bool NetworkManager::receiveDataTCP(ChatData& chatData, int& quitFlag, sf::Uint1
 	switch (socketStatus)
 	{
 	case sf::Socket::Done:
-		std::cout << "(TCP) RECEIVED packet successfully" << std::endl;
-
 		if (packet.getDataSize() == sizeof(int))
 		{
 			//A client has connected to or disconnected from the server, update relevant player data
 			if (packet >> quitFlag)
 			{
+				std::cout << "(TCP) RECEIVED packet successfully - contains QUIT FLAG" << std::endl;
+
 				if (quitFlag == -2)
 				{
 					std::cout << "Disconnected from server, closing application..." << std::endl;
@@ -166,7 +162,7 @@ bool NetworkManager::receiveDataTCP(ChatData& chatData, int& quitFlag, sf::Uint1
 			//A client has connected to or disconnected from the server, update relevant player data
 			if (packet >> quitFlag >> playerPort)
 			{
-				std::cout << "New user has connected on port " << std::to_string(playerPort) << std::endl;
+				std::cout << "(TCP) RECEIVED packet successfully - contains QUIT FLAG & CLIENT PORT" << std::endl;
 				status = true;
 			}
 		}
@@ -177,7 +173,7 @@ bool NetworkManager::receiveDataTCP(ChatData& chatData, int& quitFlag, sf::Uint1
 			{
 				if (validateData(chatData))
 				{
-					std::cout << "(TCP) UNPACKED data successfully - chat message: " << chatData.messageBuffer.toAnsiString() << std::endl;
+					std::cout << "(TCP) RECEIVED packet successfully - contains CHAT DATA: [" << chatData.userName.toAnsiString() << ": " << chatData.messageBuffer.toAnsiString() << "]" << std::endl;
 					status = true;
 				}
 			}
@@ -185,7 +181,7 @@ bool NetworkManager::receiveDataTCP(ChatData& chatData, int& quitFlag, sf::Uint1
 		break;
 
 	case sf::Socket::NotReady:
-		//std::cout << "(TCP) NOT READY to receive packet" << std::endl;
+		std::cout << "(TCP) Socket NOT READY to receive packet" << std::endl;
 		break;
 
 	case sf::Socket::Partial:
@@ -223,19 +219,17 @@ bool NetworkManager::sendDataUDP(PlayerData& playerData)
 
 	if (packet << playerData)
 	{
-		//std::cout << "(UDP) PACKED data successfully" << std::endl;
-
 		sf::Socket::Status socketStatus = socketUDP->send(packet, serverAddress, serverPortUDP);
 
 		switch (socketStatus)
 		{
 		case sf::Socket::Done:
-			//std::cout << "(UDP) SENT packet successfully" << std::endl;
+			//std::cout << "(UDP) SENT packet successfully to server" << std::endl;
 			status = true;
 			break;
 
 		case sf::Socket::Error:
-			std::cout << "(UDP) ERROR sending packet" << std::endl;
+			std::cout << "(UDP) ERROR sending packet to server" << std::endl;
 			break;
 
 		default:
@@ -259,16 +253,17 @@ bool NetworkManager::receiveDataUDP(PlayerData& playerData)
 	switch (socketStatus)
 	{
 	case sf::Socket::Done:
-		//std::cout << "(UDP) SENT packet successfully" << std::endl;
 		if (packet >> playerData)
 		{
+			//std::cout << "(UDP) RECEIVED packet successfully - contains PLAYER DATA" << std::endl;
+
 			if(validateData(playerData))
 			status = true;
 		}
 		break;
 
 	case sf::Socket::NotReady:
-		//std::cout << "(UDP) NOT READY to receive packet" << std::endl;
+		std::cout << "(UDP) Socket NOT READY to receive packet" << std::endl;
 		break;
 
 	case sf::Socket::Error:
@@ -290,6 +285,7 @@ bool NetworkManager::validateData(ChatData& chatData)
 	if (chatData.messageBuffer.getSize() > 48)
 		return false;
 
+	//Checking that all values are printable characters
 	for (char n : chatData.userName)
 	{
 		if (n < 31 || n > 127)
@@ -306,6 +302,7 @@ bool NetworkManager::validateData(ChatData& chatData)
 		}
 	}
 
+	//If the username is valid, packet is less likely to contain tampered data
 	int matchingNames = 0;
 
 	for (PlayerData& player : previousPlayerData)

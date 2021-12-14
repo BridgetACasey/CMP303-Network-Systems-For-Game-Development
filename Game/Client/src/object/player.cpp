@@ -48,9 +48,15 @@ const void Player::update(float deltaTime)
 		setPosition(getPosition().x + (velocity.x * deltaTime), getPosition().y + (velocity.y * deltaTime));
 	}
 
+	else
+	{
+		interpolate(deltaTime);
+	}
+
 	if (ghost)
 	{
-		ghost->setPosition(nextPosition.x + (velocity.x * deltaTime), nextPosition.y + (velocity.y * deltaTime));
+		//ghost->setPosition(nextPosition.x + (velocity.x * deltaTime), nextPosition.y + (velocity.y * deltaTime));
+		ghost->setPosition(nextPosition.x, nextPosition.y);
 	}
 
 	if (namePlate)
@@ -68,39 +74,55 @@ const void Player::update(float deltaTime)
 
 void Player::getUserInput()
 {
-	int keysPressed = 0;
-
-	//Altering the player's velocity based on which key has been pressed
-	if (inputManager->getKeyStatus(sf::Keyboard::Key::W) == InputStatus::PRESSED)
+	if (activePlayer)
 	{
-		velocity.y = -speed;
-		keysPressed++;
-	}
+		int keysPressed = 0;
 
-	if (inputManager->getKeyStatus(sf::Keyboard::Key::A) == InputStatus::PRESSED)
-	{
-		velocity.x = -speed;
-		keysPressed++;
-	}
-
-	if (inputManager->getKeyStatus(sf::Keyboard::Key::S) == InputStatus::PRESSED)
-	{
-		velocity.y = speed;
-		keysPressed++;
-	}
-
-	if (inputManager->getKeyStatus(sf::Keyboard::Key::D) == InputStatus::PRESSED)
-	{
-		velocity.x = speed;
-		keysPressed++;
-	}
-
-	if (!constantMove)
-	{
-		if (keysPressed == 0)
+		//Altering the player's velocity based on which key has been pressed
+		if (inputManager->getKeyStatus(sf::Keyboard::Key::W) == InputStatus::PRESSED)
 		{
-			velocity.x = 0.0f;
-			velocity.y = 0.0f;
+			inputManager->setKeyStatus(sf::Keyboard::Key::W, InputStatus::NONE);
+			velocity.y = -speed;
+			keysPressed++;
+		}
+		
+		if (inputManager->getKeyStatus(sf::Keyboard::Key::A) == InputStatus::PRESSED)
+		{
+			inputManager->setKeyStatus(sf::Keyboard::Key::A, InputStatus::NONE);
+			velocity.x = -speed;
+			keysPressed++;
+		}
+		
+		if (inputManager->getKeyStatus(sf::Keyboard::Key::S) == InputStatus::PRESSED)
+		{
+			inputManager->setKeyStatus(sf::Keyboard::Key::S, InputStatus::NONE);
+			velocity.y = speed;
+			keysPressed++;
+		}
+		
+		if (inputManager->getKeyStatus(sf::Keyboard::Key::D) == InputStatus::PRESSED)
+		{
+			inputManager->setKeyStatus(sf::Keyboard::Key::D, InputStatus::NONE);
+			velocity.x = speed;
+			keysPressed++;
+		}
+
+		if (!constantMove)
+		{
+			if (keysPressed == 0)
+			{
+				velocity.x = 0.0f;
+				velocity.y = 0.0f;
+			}
+		}
+
+		else
+		{
+			if (velocity.x == 0 || velocity.y == 0)
+			{
+				velocity.x = speed;
+				velocity.y = speed;
+			}
 		}
 	}
 }

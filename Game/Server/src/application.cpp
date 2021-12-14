@@ -34,6 +34,7 @@ const sf::Uint16 serverPortUDP = 4444;
 Application::Application()
 {
 	serverUDP = new sf::UdpSocket();
+	elapsedTime = 0.0f;
 }
 
 Application::~Application()
@@ -76,7 +77,7 @@ void Application::run()
 				connectClients();
 			}
 
-			disconnectClients();
+			checkClientTimeouts();
 
 			//Listener is not ready, check client sockets for new packets
 			handleDataTCP();
@@ -110,8 +111,8 @@ void Application::connectClients()
 					client->setClientUDP(newClientPort);
 					client->setClientAddress(newClientAddress);
 
-					std::cout << "New client has connected on " << client->getClientAddress().toString() << std::endl;
-					std::cout << "Client bound to port " << client->getClientUDP() << std::endl;
+					std::cout << "New client has connected from address " << client->getClientAddress().toString() << std::endl;
+					std::cout << "Client bound to UDP port " << client->getClientPortUDP() << std::endl;
 
 					client->setLastUpdateTime(elapsedTime);
 
@@ -120,38 +121,8 @@ void Application::connectClients()
 					selector.add(*clientTCP);
 
 					int clientFlag = -3;	//Send a flag to the clients to determine what to do next: -3 for creating new player instances
-					sf::Uint16 clientPort = 0;	//Let the current client know what ports the others are bound to - this is then used as a type of id
 
-					//Inform newly connected client of other clients on server
-					for (Connection* c : clients)
-					{
-						sf::Packet updateNew;
-
-						clientPort = c->getClientUDP();
-
-						if (updateNew << clientFlag << clientPort)
-						{
-							if (client->getClientTCP()->send(updateNew) == sf::Socket::Done)
-							{
-								std::cout << "(TCP) Informing client " << client->getClientUDP() << " of connection at " << clientPort << std::endl;
-							}
-						}
-					}
-
-					//Inform other clients on the server of the newly connected client
-					sf::Packet updateOther;
-					clientPort = newClientPort;
-
-					if (updateOther << clientFlag << clientPort)
-					{
-						for (Connection* cn : clients)
-						{
-							if (cn->getClientTCP()->send(updateOther) == sf::Socket::Done)
-							{
-								std::cout << "(TCP) Informing client " << cn->getClientUDP() << " of connection at " << clientPort << std::endl;
-							}
-						}
-					}
+					verifyClients(clientFlag, client);
 				}
 			}
 		}
@@ -165,32 +136,12 @@ void Application::connectClients()
 	}
 }
 
-void Application::disconnectClients()
-{
-	for (Connection* client : clients)
-	{
-		if (checkTimeout(client->getLastUpdateTime(), 15000.0f))
-		{
-			timeoutClients.push_back(client);
-		}
-	}
-
-	if (timeoutClients.size() > 0)
-	{
-		for (Connection* timeout : timeoutClients)
-		{
-			std::cout << "Client " << std::to_string(timeout->getClientUDP()) << " timed out!" << std::endl;
-			eraseClients(timeout->getClientID(), -4, timeout->getClientUDP());
-		}
-	}
-}
-
 //Disconnect clients gracefully and erase their data after receiving the appropriate flag
 void Application::disconnectClients(sf::Packet& receivedPacket, unsigned int id)
 {
 	int quit;
 	int clientFlag = -4;	//Flag value of -4 means a player instance needs to be removed, as the client has disconnected
-	sf::Uint16 clientPort = clients.at(id)->getClientUDP();
+	sf::Uint16 clientPort = clients.at(id)->getClientPortUDP();
 
 	if (receivedPacket >> quit)
 	{
@@ -239,12 +190,71 @@ void Application::eraseClients(int clientID, int clientFlag, sf::Uint16 clientPo
 		{
 			if (client->getClientTCP()->send(updatePacket) == sf::Socket::Done)
 			{
-				std::cout << "(TCP) Informing client " << client->getClientUDP() << " of disconnection at " << clientPort << std::endl;
+				std::cout << "(TCP) Informing client " << client->getClientPortUDP() << " of disconnection at " << clientPort << std::endl;
 			}
 		}
 	}
 
 	timeoutClients.erase(timeoutClients.begin(), timeoutClients.end());
+}
+
+void Application::verifyClients(int clientFlag, Connection* client)
+{
+	sf::Uint16 clientPort = 0;	//Let the current client know what ports the others are bound to - this is then used as a type of id
+	
+	//Inform newly connected client of other clients on server
+	for (Connection* newClient : clients)
+	{
+		sf::Packet updateNew;
+
+		clientPort = newClient->getClientPortUDP();
+
+		if (updateNew << clientFlag << clientPort)
+		{
+			if (client->getClientTCP()->send(updateNew) == sf::Socket::Done)
+			{
+				//if (client->getClientPortUDP() != clientPort)
+				std::cout << "(TCP) Informing NEW client " << client->getClientPortUDP() << " of EXISTING connection at " << clientPort << std::endl;
+			}
+		}
+	}
+
+	//Inform other clients on the server of the newly connected client
+	sf::Packet updateOther;
+	
+	clientPort = client->getClientPortUDP();
+
+	if (updateOther << clientFlag << clientPort)
+	{
+		for (Connection* existingClient : clients)
+		{
+			if (existingClient->getClientTCP()->send(updateOther) == sf::Socket::Done)
+			{
+				//if (existingClient->getClientPortUDP() != clientPort)
+				std::cout << "(TCP) Informing EXISTING client " << existingClient->getClientPortUDP() << " of NEW connection at " << clientPort << std::endl;
+			}
+		}
+	}
+}
+
+void Application::checkClientTimeouts()
+{
+	for (Connection* client : clients)
+	{
+		if (checkTimeout(client->getLastUpdateTime(), 15000.0f))
+		{
+			timeoutClients.push_back(client);
+		}
+	}
+
+	if (timeoutClients.size() > 0)
+	{
+		for (Connection* timeout : timeoutClients)
+		{
+			std::cout << "Client " << std::to_string(timeout->getClientPortUDP()) << " timed out!" << std::endl;
+			eraseClients(timeout->getClientID(), -4, timeout->getClientPortUDP());
+		}
+	}
 }
 
 void Application::handleDataTCP()
@@ -357,7 +367,7 @@ void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& ad
 
 		for (Connection* client : clients)
 		{
-			if (client->getClientUDP() == playerData.port)
+			if (client->getClientPortUDP() == playerData.port)
 			{
 				for (auto& data : client->getPlayerPackets())	//Avoiding duplicate packets
 				{
@@ -386,7 +396,7 @@ void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& ad
 	{
 		if (sentPacket << playerData)
 		{
-			if (serverUDP->send(sentPacket, client->getClientAddress(), client->getClientUDP()) == sf::Socket::Done)
+			if (serverUDP->send(sentPacket, client->getClientAddress(), client->getClientPortUDP()) == sf::Socket::Done)
 			{
 				//std::cout << "(UDP) SENT packet successfully to port " << client->getClientUDP() << std::endl;
 			}
@@ -402,6 +412,7 @@ bool Application::validateData(ChatData& chatData)
 	if (chatData.messageBuffer.getSize() > 48)
 		return false;
 
+	//Checking that all values are printable characters
 	for (char n : chatData.userName)
 	{
 		if (n < 31 || n > 127)
@@ -418,11 +429,12 @@ bool Application::validateData(ChatData& chatData)
 		}
 	}
 
+	//If the username is valid, packet is less likely to contain tampered data
 	int matchingNames = 0;
 
 	for (Connection* client : clients)
 	{
-		sf::String name = "P_" + std::to_string(client->getClientUDP());
+		sf::String name = "P_" + std::to_string(client->getClientPortUDP());
 
 		if (name == chatData.userName)
 		{

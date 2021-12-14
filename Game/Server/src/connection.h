@@ -24,7 +24,7 @@ public:
 	inline sf::TcpSocket* getClientTCP() const { return clientTCP; }
 
 	inline void setClientUDP(unsigned short udp) { clientUDP = udp; }
-	inline sf::Uint16 getClientUDP() const { return clientUDP; }
+	inline sf::Uint16 getClientPortUDP() const { return clientUDP; }
 
 	inline void setClientAddress(sf::Uint32 address) { clientAddress = sf::IpAddress(address); }
 	inline sf::IpAddress& getClientAddress() { return clientAddress; }
