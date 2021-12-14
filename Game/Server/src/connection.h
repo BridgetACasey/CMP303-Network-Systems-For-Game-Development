@@ -29,6 +29,9 @@ public:
 	inline void setClientAddress(sf::Uint32 address) { clientAddress = sf::IpAddress(address); }
 	inline sf::IpAddress& getClientAddress() { return clientAddress; }
 
+	inline void setLastUpdateTime(float time) { lastUpdateTime = time; }
+	inline float getLastUpdateTime() const { return lastUpdateTime; }
+
 private:
 	std::vector<PlayerData> playerPackets;
 	int clientID;	//Value ranging from 0 to 3 - the index of the client
@@ -36,4 +39,5 @@ private:
 	sf::TcpSocket* connectionTCP;
 	sf::Uint16 clientUDP;	//The UDP port that the client has bound themselves to
 	sf::IpAddress clientAddress;
+	float lastUpdateTime;
 };

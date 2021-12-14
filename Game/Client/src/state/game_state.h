@@ -22,20 +22,20 @@ public:
 	void render() override;
 
 private:
-	inline int getClientTime() const { return clientClock.getElapsedTime().asMilliseconds(); }
-
 	void updateUI();
 	void updatePlayerCount(int clientFlag, sf::Uint16 clientPort);
 	void createPlayerInstance(sf::Uint16 port);
 	void removePlayerInstance(sf::Uint16 port);
 	void updatePlayerPositions(float deltaTime);
 	
-	bool sendUpdate(float period);
+	bool checkSendUpdate(float period);
+	bool checkQuitTimeout(float period);
+	bool checkChatTimeout(float period);
 
 	float elapsedTime;	//The total elapsed time in ms since connecting to the server and entering the game state
-	float lastTime;	//The time at which a packet was last sent to the server
-
-	sf::Clock clientClock;
+	float lastUpdateTime;	//The time at which a packet was last sent to the server
+	float quitTimeout;
+	float chatTimeout;
 
 	Player* player;
 
@@ -44,6 +44,8 @@ private:
 	GameObject* chatBar;
 
 	ChatManager* chatManager;
+
+	ChatData pendingChat;
 
 	UIButton* chatButton;
 	UIButton* playButton;
@@ -56,6 +58,9 @@ private:
 
 	bool playing;	//Used to determine if the user is actively controlling their avatar or chatting
 	bool running;
+
+	bool waitQuit;
+	bool waitChat;
 
 	bool enableGhosts;
 

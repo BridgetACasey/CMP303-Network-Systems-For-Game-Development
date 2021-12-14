@@ -17,12 +17,12 @@ sf::Packet operator >> (sf::Packet& packet, PlayerData& data)
 
 sf::Packet operator << (sf::Packet& packet, const ChatData& data)
 {
-	return packet << data.userName << data.messageBuffer;
+	return packet << data.time << data.userName << data.messageBuffer;
 }
 
 sf::Packet operator >> (sf::Packet& packet, ChatData& data)
 {
-	return packet >> data.userName >> data.messageBuffer;
+	return packet >> data.time >> data.userName >> data.messageBuffer;
 }
 
 const sf::Uint16 serverPortTCP = 5555;
@@ -190,6 +190,7 @@ bool NetworkManager::receiveDataTCP(ChatData& chatData, int& quitFlag, sf::Uint1
 
 	case sf::Socket::Partial:
 		std::cout << "(TCP) PARTIAL packet received" << std::endl;
+
 		packet >> pendingChatData;
 
 		if (sizeof(pendingChatData) + packet.getDataSize() == sizeof(ChatData))
@@ -303,6 +304,23 @@ bool NetworkManager::validateData(ChatData& chatData)
 		{
 			return false;
 		}
+	}
+
+	int matchingNames = 0;
+
+	for (PlayerData& player : previousPlayerData)
+	{
+		sf::String name = "P_" + std::to_string(player.port);
+
+		if (name == chatData.userName)
+		{
+			matchingNames++;
+		}
+	}
+
+	if (matchingNames == 0)
+	{
+		return false;
 	}
 
 	return true;

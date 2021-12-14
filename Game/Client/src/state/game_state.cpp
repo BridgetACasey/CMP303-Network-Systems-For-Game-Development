@@ -9,8 +9,10 @@ GameState::GameState()
 	tickRate = 1000.0f / 64.0f;	//By default, the tick rate is approximately 15ms
 	latency = 0.0f;
 	
-	elapsedTime = 10000.0f;
-	lastTime = 0.0f;
+	elapsedTime = 0.0f;
+	lastUpdateTime = 0.0f;
+	quitTimeout = 0.0f;
+	chatTimeout = 0.0f;
 	
 	player = nullptr;
 	chatBar = nullptr;
@@ -22,6 +24,9 @@ GameState::GameState()
 	running = true;
 
 	enableGhosts = true;
+
+	waitQuit = false;
+	waitChat = false;
 
 	quitFlag = 0;
 }
@@ -123,33 +128,55 @@ void GameState::onExit()
 
 bool GameState::update(float deltaTime)
 {
-	elapsedTime = (float)getClientTime();
+	elapsedTime += (1000.0f * deltaTime);
 
-	ChatData sendChat;
-
-	if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
+	if (playing)
 	{
-		context->getInputManager()->setKeyStatus(sf::Keyboard::Key::Escape, InputStatus::NONE);
+		if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Escape) == InputStatus::PRESSED)
+		{
+			context->getInputManager()->setKeyStatus(sf::Keyboard::Key::Escape, InputStatus::NONE);
 
-		quitFlag = -1;
+			quitFlag = -1;
 
-		context->getNetworkManager()->sendDataTCP(sendChat, quitFlag, 0);
+			if (context->getNetworkManager()->sendDataTCP(pendingChat, quitFlag, 0))
+			{
+				waitQuit = true;
+			}
+		}
 	}
 
-	if (!playing)	//If not controlling an avatar, update the chat's input stream
+	else if (!playing)	//If not controlling an avatar, update the chat's input stream
 	{
-		chatManager->updateMessageStream(deltaTime);
-
 		if (quitFlag >= 0)
 		{
-			//Send the message to the server once ENTER has been pressed
-			if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Enter) == InputStatus::PRESSED)
+			if (waitChat)
 			{
-				context->getInputManager()->setKeyStatus(sf::Keyboard::Key::Enter, InputStatus::NONE);
+				if (checkChatTimeout(5000.0f))
+				{
+					std::cout << "Took too long to send - resending chat data packet" << std::endl;
+					context->getNetworkManager()->sendDataTCP(pendingChat, 0, 0);
+				}
+			}
 
-				sendChat.userName = "P_" + std::to_string(context->getNetworkManager()->getSocketUDP()->getLocalPort());
-				sendChat.messageBuffer = chatManager->getInputText()->getString();
-				context->getNetworkManager()->sendDataTCP(sendChat, 0, 0);
+			else
+			{
+				chatManager->updateMessageStream(deltaTime);
+
+				//Send the message to the server once ENTER has been pressed
+				if (context->getInputManager()->getKeyStatus(sf::Keyboard::Key::Enter) == InputStatus::PRESSED)
+				{
+					context->getInputManager()->setKeyStatus(sf::Keyboard::Key::Enter, InputStatus::NONE);
+
+					pendingChat.time = elapsedTime;
+					pendingChat.userName = "P_" + std::to_string(context->getNetworkManager()->getSocketUDP()->getLocalPort());
+					pendingChat.messageBuffer = chatManager->getInputText()->getString();
+
+					if (context->getNetworkManager()->sendDataTCP(pendingChat, 0, 0))
+					{
+						waitChat = true;
+						chatTimeout = elapsedTime;
+					}
+				}
 			}
 		}
 	}
@@ -187,12 +214,20 @@ bool GameState::update(float deltaTime)
 		else if (receiveChat.messageBuffer.getSize() > 0)
 		{
 			chatManager->addNewMessage(receiveChat.userName, receiveChat.messageBuffer);
+
+			waitChat = false;
 		}
 	}
 
 	updatePlayerPositions(deltaTime);
 
 	updateUI();
+
+	if (waitQuit && checkQuitTimeout(15000.0f))
+	{
+		std::cout << "TIMEOUT! Server took too long to respond. Closing application..." << std::endl;
+		running = false;
+	}
 
 	return running;
 }
@@ -261,10 +296,26 @@ void GameState::updatePlayerPositions(float deltaTime)
 	player->checkBounds((float)context->getWindowManager()->getWindow()->getSize().x, (float)context->getWindowManager()->getWindow()->getSize().y);
 	player->update(deltaTime);
 
+	std::vector<sf::Uint16> playerTimeouts;
+
 	for (Player* otherPlayer : otherPlayers)
 	{
+		if (otherPlayer->getTimeout())
+		{
+			playerTimeouts.push_back(otherPlayer->getPlayerPort());
+		}
+
+		otherPlayer->setElapsedTime(elapsedTime);
 		otherPlayer->interpolate(deltaTime);
 		otherPlayer->update(deltaTime);
+	}
+
+	if (playerTimeouts.size() > 0)
+	{
+		for (sf::Uint16 port : playerTimeouts)
+		{
+			removePlayerInstance(port);
+		}
 	}
 
 	if (playing)	//If in 'play' mode, listen for keyboard input from the user
@@ -272,7 +323,7 @@ void GameState::updatePlayerPositions(float deltaTime)
 		player->getUserInput();
 	}
 
-	if (sendUpdate(tickRate))
+	if (checkSendUpdate(tickRate))
 	{
 		//Send player data by UDP
 		PlayerData playerData;
@@ -307,6 +358,7 @@ void GameState::updatePlayerPositions(float deltaTime)
 			{
 				if (otherPlayer->getPlayerPort() == receivePlayer.port)
 				{
+					otherPlayer->setLastUpdateTime(elapsedTime);
 					otherPlayer->setVelocity(receivePlayer.velX, receivePlayer.velY);
 					otherPlayer->setNextPosition(receivePlayer.nextPosX, receivePlayer.nextPosY);
 				}
@@ -316,11 +368,35 @@ void GameState::updatePlayerPositions(float deltaTime)
 }
 
 //Returns true if it has been more than the specified time since an update was sent to the server
-bool GameState::sendUpdate(float period)
+bool GameState::checkSendUpdate(float period)
 {
-	if ((elapsedTime - lastTime) >= period)
+	if ((elapsedTime - lastUpdateTime) >= period)
 	{
-		lastTime = elapsedTime;
+		lastUpdateTime = elapsedTime;
+
+		return true;
+	}
+
+	return false;
+}
+
+bool GameState::checkQuitTimeout(float period)
+{
+	if ((elapsedTime - quitTimeout) >= period)
+	{
+		quitTimeout = elapsedTime;
+
+		return true;
+	}
+
+	return false;
+}
+
+bool GameState::checkChatTimeout(float period)
+{
+	if ((elapsedTime - chatTimeout) >= period)
+	{
+		chatTimeout = elapsedTime;
 
 		return true;
 	}

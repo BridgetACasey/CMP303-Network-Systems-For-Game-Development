@@ -20,6 +20,11 @@ Player::Player(InputManager* input)
 	activePlayer = false;
 
 	constantMove = true;
+
+	elapsedTime = 0.0f;
+	lastUpdateTime = 0.0f;
+
+	timeout = false;
 }
 
 Player::~Player()
@@ -51,6 +56,13 @@ const void Player::update(float deltaTime)
 	if (namePlate)
 	{
 		namePlate->setPosition(sf::Vector2f(getPosition().x - 25.0f, getPosition().y - 30.0f));
+	}
+
+	if ((elapsedTime - lastUpdateTime) >= 15000.0f)
+	{
+		lastUpdateTime = elapsedTime;
+
+		timeout = true;
 	}
 }
 

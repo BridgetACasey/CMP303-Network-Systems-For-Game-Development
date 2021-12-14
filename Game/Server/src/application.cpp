@@ -17,12 +17,12 @@ sf::Packet operator >> (sf::Packet& packet, PlayerData& data)
 
 sf::Packet operator << (sf::Packet& packet, const ChatData& data)
 {
-	return packet << data.userName << data.messageBuffer;
+	return packet << data.time << data.userName << data.messageBuffer;
 }
 
 sf::Packet operator >> (sf::Packet& packet, ChatData& data)
 {
-	return packet >> data.userName >> data.messageBuffer;
+	return packet >> data.time >> data.userName >> data.messageBuffer;
 }
 
 const int MAX_CLIENTS = 4;
@@ -65,12 +65,18 @@ void Application::run()
 	//Infinite server loop
 	while (running)
 	{
+		elapsedTime = serverClock.getElapsedTime().asMilliseconds();
+
+		//std::cout << "Time: " << elapsedTime << std::endl;
+
 		if (selector.wait(sf::microseconds(1)))
 		{
 			if (selector.isReady(listener))
 			{	//Check if listener is ready to receive new connections
 				connectClients();
 			}
+
+			disconnectClients();
 
 			//Listener is not ready, check client sockets for new packets
 			handleDataTCP();
@@ -106,6 +112,8 @@ void Application::connectClients()
 
 					std::cout << "New client has connected on " << client->getClientAddress().toString() << std::endl;
 					std::cout << "Client bound to port " << client->getClientUDP() << std::endl;
+
+					client->setLastUpdateTime(elapsedTime);
 
 					clients.push_back(client);
 
@@ -157,6 +165,26 @@ void Application::connectClients()
 	}
 }
 
+void Application::disconnectClients()
+{
+	for (Connection* client : clients)
+	{
+		if (checkTimeout(client->getLastUpdateTime(), 15000.0f))
+		{
+			timeoutClients.push_back(client);
+		}
+	}
+
+	if (timeoutClients.size() > 0)
+	{
+		for (Connection* timeout : timeoutClients)
+		{
+			std::cout << "Client " << std::to_string(timeout->getClientUDP()) << " timed out!" << std::endl;
+			eraseClients(timeout->getClientID(), -4, timeout->getClientUDP());
+		}
+	}
+}
+
 //Disconnect clients gracefully and erase their data after receiving the appropriate flag
 void Application::disconnectClients(sf::Packet& receivedPacket, unsigned int id)
 {
@@ -180,14 +208,19 @@ void Application::disconnectClients(sf::Packet& receivedPacket, unsigned int id)
 				//Inform client that their request has been accepted and erase them from the list of connected clients
 				if (clients.at(id)->getClientTCP()->send(sentPacket) == sf::Socket::Done)
 				{
-					std::cout << "(TCP) Disconnecting client..." << std::endl;
-
-					selector.remove(*clients.at(id)->getClientTCP());
-					clients.erase(clients.begin() + id);
+					eraseClients(id, clientFlag, clientPort);
 				}
 			}
 		}
 	}
+}
+
+void Application::eraseClients(int clientID, int clientFlag, sf::Uint16 clientPort)
+{
+	std::cout << "(TCP) Disconnecting client..." << std::endl;
+
+	selector.remove(*clients.at(clientID)->getClientTCP());
+	clients.erase(clients.begin() + clientID);
 
 	clients.shrink_to_fit();
 
@@ -210,6 +243,8 @@ void Application::disconnectClients(sf::Packet& receivedPacket, unsigned int id)
 			}
 		}
 	}
+
+	timeoutClients.erase(timeoutClients.begin(), timeoutClients.end());
 }
 
 void Application::handleDataTCP()
@@ -240,8 +275,11 @@ void Application::handleDataTCP()
 						chatData.userName = "NULL";
 						updateChatLog(receivedPacket, chatData);
 
-						if(chatData.userName != "NULL")
-						currentMessages.push_back(chatData);
+						if (chatData.userName != "NULL")
+						{
+							currentMessages.push_back(chatData);
+							clients.at(i)->setLastUpdateTime(elapsedTime);
+						}
 					}
 				}
 			}
@@ -334,6 +372,8 @@ void Application::updatePlayerData(sf::Packet& receivedPacket, sf::IpAddress& ad
 					client->predictMovement();
 				}
 
+				client->setLastUpdateTime(elapsedTime);
+
 				playerData = client->getPlayerPackets().back();	//Grab the last packet after prediction has been calculated
 			}
 		}
@@ -378,6 +418,23 @@ bool Application::validateData(ChatData& chatData)
 		}
 	}
 
+	int matchingNames = 0;
+
+	for (Connection* client : clients)
+	{
+		sf::String name = "P_" + std::to_string(client->getClientUDP());
+
+		if (name == chatData.userName)
+		{
+			matchingNames++;
+		}
+	}
+
+	if (matchingNames == 0)
+	{
+		return false;
+	}
+
 	return true;
 }
 
@@ -402,4 +459,14 @@ bool Application::validateData(PlayerData& playerData)
 		return false;
 
 	return true;
+}
+
+bool Application::checkTimeout(float last, float period)
+{
+	if ((elapsedTime - last) >= period)
+	{
+		return true;
+	}
+
+	return false;
 }

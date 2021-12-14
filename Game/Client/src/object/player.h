@@ -41,6 +41,11 @@ public:
 	inline void setConstantMove(bool move) { constantMove = move; }
 	inline bool getConstantMove() const { return constantMove; }
 
+	inline void setElapsedTime(float time) { elapsedTime = time; }
+	inline void setLastUpdateTime(float time) { lastUpdateTime = time; }
+	
+	inline bool getTimeout() const { return timeout; }
+
 private:
 	InputManager* inputManager;
 
@@ -56,4 +61,9 @@ private:
 	bool activePlayer;
 
 	bool constantMove;
+
+	float elapsedTime;	//The total elapsed time in ms since connecting to the server and entering the game state
+	float lastUpdateTime;	//The time at which a packet was last sent to the server
+
+	bool timeout;
 };

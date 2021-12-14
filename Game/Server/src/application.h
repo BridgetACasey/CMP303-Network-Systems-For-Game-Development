@@ -22,7 +22,9 @@ public:
 
 private:	
 	void connectClients();
+	void disconnectClients();
 	void disconnectClients(sf::Packet& receivedPacket, unsigned int id);
+	void eraseClients(int clientID, int clientFlag, sf::Uint16 clientPort);
 
 	void handleDataTCP();
 	void handleDataUDP();
@@ -33,10 +35,17 @@ private:
 	bool validateData(ChatData& chatData);
 	bool validateData(PlayerData& playerData);
 
+	bool checkTimeout(float last, float period);
+
+	sf::Clock serverClock;
+
+	float elapsedTime;
+
 	sf::TcpListener listener;
 	sf::SocketSelector selector;
 
 	std::vector<Connection*> clients;
+	std::vector<Connection*> timeoutClients;
 	sf::UdpSocket* serverUDP;
 
 	std::vector<ChatData> chatHistory;
